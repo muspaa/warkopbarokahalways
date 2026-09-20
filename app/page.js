@@ -11,12 +11,6 @@ const IconCart = () => (
     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
   </svg>
 );
-const IconSearch = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-    <circle cx="11" cy="11" r="8" />
-    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-  </svg>
-);
 const IconCoffee = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
     <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
@@ -87,7 +81,6 @@ export default function HomePage() {
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [successOrder, setSuccessOrder] = useState(null);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -215,9 +208,7 @@ export default function HomePage() {
   }
 
   const filteredMenus = menus.filter((m) => {
-    const matchFilter = filter === "all" || m.category === filter;
-    const matchSearch = !search.trim() || m.name.toLowerCase().includes(search.toLowerCase());
-    return matchFilter && matchSearch;
+    return filter === "all" || m.category === filter;
   });
 
   return (
@@ -257,14 +248,6 @@ export default function HomePage() {
       </header>
 
       <main className="pt-20">
-        {/* Banner meja */}
-        {tableNumber && (
-          <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white text-center py-2 px-4 text-sm font-semibold flex items-center justify-center gap-2">
-            <IconMapPin />
-            Anda di Meja {tableNumber} · Pesanan akan diantar ke meja ini
-          </div>
-        )}
-
         {/* HERO */}
         <section className="relative min-h-[60vh] flex items-center px-4 sm:px-8 py-16 overflow-hidden">
           <div
@@ -297,31 +280,6 @@ export default function HomePage() {
 
         {/* MENU */}
         <section id="menu" className="px-4 sm:px-8 py-12 max-w-6xl mx-auto">
-          <div className="flex flex-wrap items-end justify-between gap-6 mb-6">
-            <div>
-              <p className="text-xs tracking-[0.3em] text-[#d4a24c] uppercase mb-2">
-                Menu Pilihan
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-bold">
-                BAROCKAH <span className="text-[#d4a24c]">ALWAYS</span>
-              </h2>
-            </div>
-          </div>
-
-          {/* Search */}
-          <div className="relative max-w-md mb-5">
-            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-[#9c948a] pointer-events-none">
-              <IconSearch />
-            </span>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari menu..."
-              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white/5 border border-[#d4a24c]/20 text-[#f4ede2] placeholder-[#9c948a] outline-none focus:border-[#d4a24c] focus:ring-2 focus:ring-[#d4a24c]/20 transition-all"
-            />
-          </div>
-
           {/* Filter */}
           <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
             {[
@@ -524,7 +482,7 @@ export default function HomePage() {
         />
       )}
 
-      {/* CHECKOUT MODAL — TANPA INPUT MEJA */}
+      {/* CHECKOUT MODAL */}
       {showCheckout && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <div className="bg-[#131110] border border-[#d4a24c]/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -542,7 +500,6 @@ export default function HomePage() {
             </div>
 
             <div className="p-5 space-y-4">
-              {/* Info Meja — readonly */}
               {tableNumber ? (
                 <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/30 rounded-xl p-3">
                   <div className="w-10 h-10 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center shrink-0">
