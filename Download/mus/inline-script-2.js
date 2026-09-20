@@ -1,3 +1,0 @@
-
-        window.lucide = window.lucide || { createIcons: function() {} };
-    
