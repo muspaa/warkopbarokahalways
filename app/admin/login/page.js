@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 
 export default function AdminLogin() {
@@ -9,36 +8,28 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   async function handleLogin(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
 
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
-      }
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
 
-      if (!data?.session) {
-        setError("Session kosong");
-        setLoading(false);
-        return;
-      }
-
-      // Tunggu cookie tersimpan, lalu redirect
-      await new Promise((r) => setTimeout(r, 500));
+    if (data.session) {
+      // Paksa reload ke /admin
       window.location.href = "/admin";
-    } catch (err) {
-      setError(err.message);
+    } else {
+      setError("Session kosong");
       setLoading(false);
     }
   }
@@ -53,6 +44,7 @@ export default function AdminLogin() {
           <h1 className="text-2xl font-bold text-white">Admin Login</h1>
           <p className="text-sm text-slate-300 mt-2">Warkop Barockah Always</p>
         </div>
+
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
@@ -60,6 +52,7 @@ export default function AdminLogin() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
             className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 outline-none focus:border-[#d4a24c]"
           />
           <input
@@ -68,13 +61,16 @@ export default function AdminLogin() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="current-password"
             className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 outline-none focus:border-[#d4a24c]"
           />
+
           {error && (
-            <p className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 break-words">
+            <div className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 break-words">
               {error}
-            </p>
+            </div>
           )}
+
           <button
             type="submit"
             disabled={loading}
@@ -86,4 +82,4 @@ export default function AdminLogin() {
       </div>
     </div>
   );
-}
+              }
