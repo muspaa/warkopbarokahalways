@@ -213,9 +213,97 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0b0a08] text-[#f4ede2]">
+      {/* ============ GLOBAL ANIMATION STYLES ============ */}
+      <style jsx global>{`
+        /* === ANIMASI TEXT BERJALAN (SHIMMER) === */
+        @keyframes shimmerMove {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .text-shimmer {
+          background: linear-gradient(
+            90deg,
+            #d4a24c 0%,
+            #e8bd6e 25%,
+            #fff8e7 50%,
+            #e8bd6e 75%,
+            #d4a24c 100%
+          );
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shimmerMove 3s linear infinite;
+        }
+
+        /* === ANIMASI TEXT MASUK (LETTER RISE) === */
+        @keyframes titleFadeUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .title-line-1 {
+          animation: titleFadeUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        .title-line-2 {
+          animation: titleFadeUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+        }
+
+        /* === ANIMASI PRODUK MASUK (CARD FADE IN) === */
+        @keyframes cardEnter {
+          from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        .menu-card-enter {
+          animation: cardEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        /* === ANIMASI BUTTON (PULSE GLOW) === */
+        @keyframes pulseGlow {
+          0%, 100% {
+            box-shadow: 0 8px 24px -8px rgba(212, 162, 76, 0.5);
+          }
+          50% {
+            box-shadow: 0 12px 32px -6px rgba(212, 162, 76, 0.8);
+          }
+        }
+        .btn-pulse {
+          animation: pulseGlow 2.5s ease-in-out infinite;
+        }
+
+        /* === ANIMASI BUTTON (RIPPLE) === */
+        @keyframes btnRipple {
+          to { transform: scale(4); opacity: 0; }
+        }
+
+        /* === ANIMASI BUTTON (ARROW SLIDE) === */
+        @keyframes arrowBounce {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(4px); }
+        }
+        .btn-arrow:hover svg:last-child {
+          animation: arrowBounce 0.6s ease-in-out infinite;
+        }
+
+        /* === ANIMASI BUTTON (SHAKE) === */
+        @keyframes shakeX {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-4px); }
+          75% { transform: translateX(4px); }
+        }
+        .btn-shake:hover {
+          animation: shakeX 0.3s ease-in-out;
+        }
+      `}</style>
+
       {/* HEADER */}
       <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-4 px-4 sm:px-8 py-4 bg-[#0b0a08]/90 backdrop-blur-md border-b border-[#d4a24c]/20">
-        <a href="#top" className="flex items-center gap-2 text-[#d4a24c] font-bold text-lg tracking-wider shrink-0">
+        <a href="#top" className="flex items-center gap-2 text-[#d4a24c] font-bold text-lg tracking-wider shrink-0 hover:scale-105 transition-transform">
           <IconCoffee />
           <span className="hidden sm:inline">BAROCKAH</span>
         </a>
@@ -235,7 +323,7 @@ export default function HomePage() {
 
         <button
           onClick={() => setCartOpen(true)}
-          className="relative ml-auto md:ml-0 flex items-center gap-2 px-4 py-2 rounded-full bg-[#d4a24c]/10 border border-[#d4a24c]/40 text-[#d4a24c] font-bold text-sm hover:bg-[#d4a24c]/20 transition-all"
+          className="relative ml-auto md:ml-0 flex items-center gap-2 px-4 py-2 rounded-full bg-[#d4a24c]/10 border border-[#d4a24c]/40 text-[#d4a24c] font-bold text-sm hover:bg-[#d4a24c]/20 hover:scale-105 active:scale-95 transition-all"
         >
           <IconCart />
           <span className="hidden sm:inline">Keranjang</span>
@@ -254,24 +342,24 @@ export default function HomePage() {
             className="absolute inset-0 opacity-25 bg-cover bg-center"
             style={{
               backgroundImage:
-                "radial-gradient(circle at 75% 30%, rgba(212,162,76,0.16), transparent 55%), radial-gradient(circle at 15% 80%, rgba(212,162,76,0.08), transparent 50%), url('https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1600&q=70')",
+                "radial-gradient(circle at 75% 30%, rgba(212,162,76,0.16), transparent 55%), radial-gradient(circle at 15% 80%, rgba(212,162,76,0.08), transparent 50%), url('https://cdn.zass.in/GsBeAoEP8F.png",
             }}
           />
           <div className="relative z-10 max-w-2xl">
             <p className="text-xs tracking-[0.3em] text-[#d4a24c] uppercase mb-3">
-              Ngopi · Makan · Santai
             </p>
             <h1 className="font-bold text-[clamp(2.4rem,7vw,4.5rem)] leading-[1.05] mb-5">
-              WARKOP
+              <span className="title-line-1 inline-block">WARKOP</span>
               <br />
-              <span className="text-[#d4a24c]">BAROCKAH</span> ALWAYS
+              <span className="title-line-2 inline-block">
+                <span className="text-shimmer">BAROCKAH</span> ALWAYS
+              </span>
             </h1>
             <p className="text-[#9c948a] text-base sm:text-lg mb-8 max-w-md">
-              Kopi single origin, makanan lezat, dan suasana nyaman. Pesan langsung, tanpa daftar akun.
             </p>
             <a
               href="#menu"
-              className="inline-flex items-center gap-2 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold px-6 py-3 rounded-full shadow-lg shadow-[#d4a24c]/40 hover:-translate-y-1 transition-transform"
+              className="btn-arrow btn-pulse group inline-flex items-center gap-2 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold px-6 py-3 rounded-full shadow-lg shadow-[#d4a24c]/40 hover:-translate-y-1 hover:scale-105 active:scale-95 transition-all"
             >
               Lihat Menu <IconArrowRight />
             </a>
@@ -290,9 +378,9 @@ export default function HomePage() {
               <button
                 key={f.k}
                 onClick={() => setFilter(f.k)}
-                className={`px-5 py-2 rounded-full border text-sm font-semibold whitespace-nowrap transition-all ${
+                className={`btn-shake px-5 py-2 rounded-full border text-sm font-semibold whitespace-nowrap transition-all hover:scale-105 active:scale-95 ${
                   filter === f.k
-                    ? "bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] border-[#d4a24c]"
+                    ? "bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] border-[#d4a24c] shadow-lg shadow-[#d4a24c]/30"
                     : "border-[#d4a24c]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#d4a24c]"
                 }`}
               >
@@ -305,11 +393,12 @@ export default function HomePage() {
           {filteredMenus.length === 0 ? (
             <p className="text-center py-16 text-[#9c948a]">Menu tidak ditemukan</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredMenus.map((m) => (
+            <div key={filter} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredMenus.map((m, idx) => (
                 <article
                   key={m.id}
-                  className="group bg-gradient-to-b from-[#d4a24c]/5 to-[#131110] border border-[#d4a24c]/20 rounded-2xl overflow-hidden hover:-translate-y-2 hover:border-[#d4a24c]/50 hover:shadow-2xl hover:shadow-[#d4a24c]/20 transition-all duration-300 flex flex-col"
+                  className="menu-card-enter group bg-gradient-to-b from-[#d4a24c]/5 to-[#131110] border border-[#d4a24c]/20 rounded-2xl overflow-hidden hover:-translate-y-2 hover:border-[#d4a24c]/50 hover:shadow-2xl hover:shadow-[#d4a24c]/20 transition-all duration-300 flex flex-col"
+                  style={{ animationDelay: `${idx * 0.06}s` }}
                 >
                   <div className="relative aspect-square overflow-hidden bg-[#1a1714]">
                     {m.image_url ? (
@@ -359,7 +448,7 @@ export default function HomePage() {
                       </div>
                       <button
                         onClick={() => handleAdd(m)}
-                        className="w-11 h-11 rounded-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] flex items-center justify-center shadow-lg shadow-[#d4a24c]/40 hover:rotate-90 hover:scale-110 transition-transform active:scale-95"
+                        className="w-11 h-11 rounded-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] flex items-center justify-center shadow-lg shadow-[#d4a24c]/40 hover:rotate-90 hover:scale-125 active:scale-95 transition-all duration-300"
                         aria-label={`Tambah ${m.name}`}
                       >
                         <IconPlus />
@@ -390,7 +479,7 @@ export default function HomePage() {
           </h3>
           <button
             onClick={() => setCartOpen(false)}
-            className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 text-[#9c948a] hover:text-[#d4a24c] transition-colors flex items-center justify-center"
+            className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 text-[#9c948a] hover:text-[#d4a24c] hover:rotate-90 hover:scale-110 transition-all flex items-center justify-center"
           >
             <IconClose />
           </button>
@@ -412,7 +501,8 @@ export default function HomePage() {
             cart.map((x, idx) => (
               <div
                 key={idx}
-                className="grid grid-cols-[56px_1fr_auto] gap-3 items-center pb-3 border-b border-[#d4a24c]/20"
+                className="menu-card-enter grid grid-cols-[56px_1fr_auto] gap-3 items-center pb-3 border-b border-[#d4a24c]/20"
+                style={{ animationDelay: `${idx * 0.05}s` }}
               >
                 <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#1a1714] shrink-0">
                   {x.image_url ? (
@@ -435,14 +525,14 @@ export default function HomePage() {
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => changeQty(idx, -1)}
-                    className="w-7 h-7 rounded-full border border-[#d4a24c]/30 text-[#d4a24c] hover:bg-[#d4a24c] hover:text-[#1a1408] transition-all flex items-center justify-center"
+                    className="w-7 h-7 rounded-full border border-[#d4a24c]/30 text-[#d4a24c] hover:bg-[#d4a24c] hover:text-[#1a1408] hover:scale-110 active:scale-90 transition-all flex items-center justify-center"
                   >
                     <IconMinus />
                   </button>
                   <span className="font-bold w-5 text-center text-sm">{x.qty}</span>
                   <button
                     onClick={() => changeQty(idx, 1)}
-                    className="w-7 h-7 rounded-full border border-[#d4a24c]/30 text-[#d4a24c] hover:bg-[#d4a24c] hover:text-[#1a1408] transition-all flex items-center justify-center"
+                    className="w-7 h-7 rounded-full border border-[#d4a24c]/30 text-[#d4a24c] hover:bg-[#d4a24c] hover:text-[#1a1408] hover:scale-110 active:scale-90 transition-all flex items-center justify-center"
                   >
                     <IconPlus />
                   </button>
@@ -464,7 +554,7 @@ export default function HomePage() {
               setShowCheckout(true);
             }}
             disabled={cart.length === 0}
-            className="w-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            className="btn-arrow btn-pulse w-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             Pesan Sekarang <IconArrowRight />
           </button>
@@ -485,7 +575,7 @@ export default function HomePage() {
       {/* CHECKOUT MODAL */}
       {showCheckout && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="bg-[#131110] border border-[#d4a24c]/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="menu-card-enter bg-[#131110] border border-[#d4a24c]/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b border-[#d4a24c]/20 flex justify-between items-start">
               <div>
                 <h3 className="font-bold text-lg">Konfirmasi Pesanan</h3>
@@ -493,7 +583,7 @@ export default function HomePage() {
               </div>
               <button
                 onClick={() => setShowCheckout(false)}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-[#9c948a] hover:text-white transition-colors flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-[#9c948a] hover:text-white hover:rotate-90 hover:scale-110 transition-all flex items-center justify-center"
               >
                 <IconClose />
               </button>
@@ -560,14 +650,14 @@ export default function HomePage() {
             <div className="p-5 border-t border-[#d4a24c]/20 flex gap-3">
               <button
                 onClick={() => setShowCheckout(false)}
-                className="px-5 py-3 rounded-full border border-[#d4a24c]/30 text-[#9c948a] font-semibold hover:text-[#f4ede2] transition-colors"
+                className="px-5 py-3 rounded-full border border-[#d4a24c]/30 text-[#9c948a] font-semibold hover:text-[#f4ede2] hover:border-[#d4a24c] hover:scale-105 active:scale-95 transition-all"
               >
                 Batal
               </button>
               <button
                 onClick={submitOrder}
                 disabled={submitting || !tableNumber}
-                className="flex-1 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                className="btn-arrow flex-1 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
@@ -586,7 +676,7 @@ export default function HomePage() {
       {/* OPTION MODAL */}
       {optionModal && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="bg-[#131110] border border-[#d4a24c]/30 rounded-2xl w-full max-w-md">
+          <div className="menu-card-enter bg-[#131110] border border-[#d4a24c]/30 rounded-2xl w-full max-w-md">
             <div className="p-5 border-b border-[#d4a24c]/20 flex justify-between items-start">
               <div className="flex items-start gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-[#d4a24c]/10 text-[#d4a24c] flex items-center justify-center shrink-0">
@@ -599,7 +689,7 @@ export default function HomePage() {
               </div>
               <button
                 onClick={() => setOptionModal(null)}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-[#9c948a] hover:text-white transition-colors flex items-center justify-center shrink-0"
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-[#9c948a] hover:text-white hover:rotate-90 hover:scale-110 transition-all flex items-center justify-center shrink-0"
               >
                 <IconClose />
               </button>
@@ -614,9 +704,9 @@ export default function HomePage() {
                     <button
                       key={t}
                       onClick={() => setSelectedTemp(t)}
-                      className={`flex-1 py-3 rounded-full border text-sm font-semibold transition-all ${
+                      className={`flex-1 py-3 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
                         selectedTemp === t
-                          ? "bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] border-[#d4a24c]"
+                          ? "bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] border-[#d4a24c] shadow-lg shadow-[#d4a24c]/30"
                           : "border-[#d4a24c]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#d4a24c]"
                       }`}
                     >
@@ -634,9 +724,9 @@ export default function HomePage() {
                     <button
                       key={s}
                       onClick={() => setSelectedSugar(s)}
-                      className={`flex-1 py-3 rounded-full border text-sm font-semibold transition-all ${
+                      className={`flex-1 py-3 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
                         selectedSugar === s
-                          ? "bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] border-[#d4a24c]"
+                          ? "bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] border-[#d4a24c] shadow-lg shadow-[#d4a24c]/30"
                           : "border-[#d4a24c]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#d4a24c]"
                       }`}
                     >
@@ -649,13 +739,13 @@ export default function HomePage() {
             <div className="p-5 border-t border-[#d4a24c]/20 flex gap-3">
               <button
                 onClick={() => setOptionModal(null)}
-                className="px-5 py-3 rounded-full border border-[#d4a24c]/30 text-[#9c948a] font-semibold hover:text-[#f4ede2] transition-colors"
+                className="px-5 py-3 rounded-full border border-[#d4a24c]/30 text-[#9c948a] font-semibold hover:text-[#f4ede2] hover:border-[#d4a24c] hover:scale-105 active:scale-95 transition-all"
               >
                 Batal
               </button>
               <button
                 onClick={confirmOption}
-                className="flex-1 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full hover:shadow-lg transition-all active:scale-[0.98]"
+                className="flex-1 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 Tambah ke Keranjang
               </button>
@@ -667,7 +757,7 @@ export default function HomePage() {
       {/* SUCCESS MODAL */}
       {successOrder && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="bg-[#131110] border border-[#d4a24c]/30 rounded-2xl w-full max-w-sm p-8 text-center">
+          <div className="menu-card-enter bg-[#131110] border border-[#d4a24c]/30 rounded-2xl w-full max-w-sm p-8 text-center">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 mx-auto flex items-center justify-center text-white mb-5 shadow-lg shadow-green-500/30">
               <IconCheck />
             </div>
@@ -687,7 +777,7 @@ export default function HomePage() {
             </div>
             <button
               onClick={() => setSuccessOrder(null)}
-              className="w-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full hover:shadow-lg transition-all active:scale-[0.98]"
+              className="w-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               Pesan Lagi
             </button>
