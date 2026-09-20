@@ -69,10 +69,15 @@ export default function MenuPage() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   async function load() {
-    const { data } = await supabase.from("menu_items").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase
+      .from("menu_items")
+      .select("*")
+      .order("created_at", { ascending: false });
     setMenus(data || []);
     setLoading(false);
   }
@@ -110,7 +115,10 @@ export default function MenuPage() {
     };
     let err;
     if (editId) {
-      const { error } = await supabase.from("menu_items").update(payload).eq("id", editId);
+      const { error } = await supabase
+        .from("menu_items")
+        .update(payload)
+        .eq("id", editId);
       err = error;
     } else {
       const { error } = await supabase.from("menu_items").insert(payload);
@@ -129,7 +137,10 @@ export default function MenuPage() {
   }
 
   async function toggleAvailable(m) {
-    await supabase.from("menu_items").update({ is_available: !m.is_available }).eq("id", m.id);
+    await supabase
+      .from("menu_items")
+      .update({ is_available: !m.is_available })
+      .eq("id", m.id);
     load();
   }
 
@@ -140,7 +151,16 @@ export default function MenuPage() {
       maximumFractionDigits: 0,
     }).format(n);
 
-  const filtered = menus.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = menus.filter((m) =>
+    m.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const catLabel = (cat) => {
+    if (cat === "minuman") return "Minuman";
+    if (cat === "makanan") return "Makanan";
+    if (cat === "snack") return "Snack";
+    return cat;
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -148,13 +168,11 @@ export default function MenuPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Kelola Menu</h1>
-          <p className="text-slate-500 mt-1 text-sm">
-            {menus.length} menu terdaftar
-          </p>
+          <p className="text-slate-500 mt-1 text-sm">{menus.length} menu terdaftar</p>
         </div>
         <button
           onClick={openAdd}
-          className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold shadow-lg shadow-[#d4a24c]/30 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2 active:scale-95"
+          className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#e05c3a] to-[#f07a4a] text-white font-bold shadow-lg shadow-[#e05c3a]/30 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2 active:scale-95"
         >
           <IconPlus /> Tambah Menu
         </button>
@@ -170,7 +188,7 @@ export default function MenuPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Cari menu..."
-          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white outline-none focus:border-[#d4a24c] focus:ring-2 focus:ring-[#d4a24c]/20 transition-all"
+          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white outline-none focus:border-[#e05c3a] focus:ring-2 focus:ring-[#e05c3a]/20 transition-all"
         />
       </div>
 
@@ -192,7 +210,10 @@ export default function MenuPage() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((m) => (
-            <div key={m.id} className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg hover:border-slate-300 transition-all flex flex-col">
+            <div
+              key={m.id}
+              className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg hover:border-slate-300 transition-all flex flex-col"
+            >
               <div className="relative aspect-video bg-slate-100">
                 {m.image_url ? (
                   <img src={m.image_url} alt={m.name} className="w-full h-full object-cover" />
@@ -209,7 +230,7 @@ export default function MenuPage() {
                   {m.is_available ? "Tersedia" : "Habis"}
                 </span>
                 <span className="absolute bottom-2 left-2 bg-white/95 backdrop-blur text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider text-slate-700">
-                  {m.category}
+                  {catLabel(m.category)}
                 </span>
               </div>
 
@@ -218,7 +239,7 @@ export default function MenuPage() {
                 <p className="text-xs text-slate-500 line-clamp-2 mt-1 h-8">
                   {m.description || "Tanpa deskripsi"}
                 </p>
-                <p className="text-lg font-bold text-[#d4a24c] mt-2">{rp(m.price)}</p>
+                <p className="text-lg font-bold text-[#e05c3a] mt-2">{rp(m.price)}</p>
 
                 <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
                   <button
@@ -254,7 +275,10 @@ export default function MenuPage() {
       {/* Modal Form */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowForm(false)} />
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowForm(false)}
+          />
           <form
             onSubmit={handleSave}
             className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
@@ -310,6 +334,7 @@ export default function MenuPage() {
                   >
                     <option value="makanan">Makanan</option>
                     <option value="minuman">Minuman</option>
+                    <option value="snack">Snack / Cemilan</option>
                   </select>
                 </Field>
               </div>
@@ -364,7 +389,7 @@ export default function MenuPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold disabled:opacity-50 hover:shadow-lg transition-all"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#e05c3a] to-[#f07a4a] text-white font-bold disabled:opacity-50 hover:shadow-lg transition-all"
               >
                 {saving ? "Menyimpan..." : "Simpan"}
               </button>
@@ -385,8 +410,8 @@ export default function MenuPage() {
           transition: all 0.2s;
         }
         .input-field:focus {
-          border-color: #d4a24c;
-          box-shadow: 0 0 0 3px rgba(212, 162, 76, 0.15);
+          border-color: #e05c3a;
+          box-shadow: 0 0 0 3px rgba(224, 92, 58, 0.15);
         }
       `}</style>
     </div>
