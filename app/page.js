@@ -12,23 +12,35 @@ const IconCart = () => (
   </svg>
 );
 const IconCoffee = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
     <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
     <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
-    <line x1="6" y1="1" x2="6" y2="4" />
-    <line x1="10" y1="1" x2="10" y2="4" />
-    <line x1="14" y1="1" x2="14" y2="4" />
   </svg>
 );
 const IconFood = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
     <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
     <path d="M7 2v20" />
     <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
   </svg>
 );
+const IconSnack = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+    <path d="M6 2l1.5 4.5A6 6 0 0 0 12 10a6 6 0 0 0 4.5-3.5L18 2" />
+    <path d="M4 12h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+    <line x1="12" y1="12" x2="12" y2="14" />
+  </svg>
+);
+const IconGrid = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
+  </svg>
+);
 const IconPlus = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
     <line x1="12" y1="5" x2="12" y2="19" />
     <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
@@ -62,18 +74,18 @@ const IconArrowRight = () => (
   </svg>
 );
 const IconArrowDown = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
     <line x1="12" y1="5" x2="12" y2="19" />
     <polyline points="19 12 12 19 5 12" />
   </svg>
 );
 const IconStar = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-2.5 h-2.5">
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
   </svg>
 );
 
-/* ========== HOOK: REVEAL ON SCROLL ========== */
+/* ========== REVEAL ON SCROLL ========== */
 function useRevealOnScroll() {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
@@ -103,7 +115,6 @@ function useRevealOnScroll() {
   return { ref, visible };
 }
 
-/* ========== KOMPONEN: REVEAL WRAPPER ========== */
 function Reveal({ children, delay = 0, className = "" }) {
   const { ref, visible } = useRevealOnScroll();
   return (
@@ -122,6 +133,13 @@ function Reveal({ children, delay = 0, className = "" }) {
   );
 }
 
+function catMeta(cat) {
+  if (cat === "minuman") return { Icon: IconCoffee, label: "Minuman" };
+  if (cat === "makanan") return { Icon: IconFood, label: "Makanan" };
+  if (cat === "snack") return { Icon: IconSnack, label: "Snack" };
+  return { Icon: IconFood, label: "Menu" };
+}
+
 export default function HomePage() {
   const [menus, setMenus] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -136,6 +154,7 @@ export default function HomePage() {
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [successOrder, setSuccessOrder] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -153,6 +172,11 @@ export default function HomePage() {
     const meja = params.get("meja");
     if (meja) setTableNumber(meja);
   }, []);
+
+  function showToast(text) {
+    setToast(text);
+    setTimeout(() => setToast(null), 1800);
+  }
 
   const rupiah = (n) =>
     new Intl.NumberFormat("id-ID", {
@@ -175,6 +199,7 @@ export default function HomePage() {
       }
       return [...prev, { ...item, qty: 1, variant }];
     });
+    showToast(`${item.name} ditambahkan!`);
   }
 
   function changeQty(idx, d) {
@@ -262,15 +287,19 @@ export default function HomePage() {
     }
   }
 
-  const filteredMenus = menus.filter((m) => {
-    return filter === "all" || m.category === filter;
-  });
+  const filteredMenus =
+    filter === "all" ? menus : menus.filter((m) => m.category === filter);
+
+  const FILTERS = [
+    { k: "all", l: "Semua", Icon: IconGrid },
+    { k: "makanan", l: "Makanan", Icon: IconFood },
+    { k: "snack", l: "Cemilan", Icon: IconSnack },
+    { k: "minuman", l: "Minuman", Icon: IconCoffee },
+  ];
 
   return (
     <div className="min-h-screen bg-[#0b0a08] text-[#f4ede2]">
-      {/* ============ GLOBAL ANIMATION STYLES ============ */}
       <style jsx global>{`
-        /* Efek silau putih pada button filter */
         @keyframes shineSweep {
           0% { left: -100%; }
           60% { left: 120%; }
@@ -300,7 +329,6 @@ export default function HomePage() {
           animation: shineSweep 0.9s ease-out;
         }
 
-        /* Kartu menu fade-in */
         @keyframes cardEnter {
           from {
             opacity: 0;
@@ -315,27 +343,34 @@ export default function HomePage() {
           animation: cardEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
-        /* Pulse glow untuk tombol utama */
         @keyframes pulseGlow {
           0%, 100% {
-            box-shadow: 0 8px 24px -8px rgba(212, 162, 76, 0.5);
+            box-shadow: 0 8px 24px -8px rgba(224, 92, 58, 0.5);
           }
           50% {
-            box-shadow: 0 12px 32px -6px rgba(212, 162, 76, 0.85);
+            box-shadow: 0 12px 32px -6px rgba(224, 92, 58, 0.85);
           }
         }
         .btn-pulse {
           animation: pulseGlow 2.5s ease-in-out infinite;
         }
+
+        @keyframes toastIn {
+          from { transform: translate(-50%, 80px); opacity: 0; }
+          to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .toast-anim {
+          animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
       `}</style>
 
       {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-4 px-4 sm:px-8 py-3 bg-[#0b0a08]/90 backdrop-blur-md border-b border-[#d4a24c]/20">
-        <a href="#top" className="flex items-center gap-3 text-[#d4a24c] font-bold text-lg tracking-wider shrink-0 hover:scale-[1.02] transition-transform">
+      <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-4 px-4 sm:px-8 py-3 bg-[#0b0a08]/90 backdrop-blur-md border-b border-[#e05c3a]/20">
+        <a href="#top" className="flex items-center gap-3 shrink-0 hover:scale-[1.02] transition-transform">
           <img
             src="https://cdn.zass.in/3JXTmgsKRM.png"
-            alt="Logo Barockah"
-            className="h-12 sm:h-14 w-auto object-contain drop-shadow-[0_0_12px_rgba(212,162,76,0.45)]"
+            alt="Logo Barokah"
+            className="h-12 sm:h-14 w-auto object-contain drop-shadow-[0_0_12px_rgba(224,92,58,0.45)]"
           />
         </a>
 
@@ -346,20 +381,14 @@ export default function HomePage() {
           </div>
         )}
 
-        <nav className="hidden md:flex gap-6 ml-auto">
-          <a href="#menu" className="text-sm text-[#9c948a] hover:text-[#f4ede2] transition-colors">
-            Menu
-          </a>
-        </nav>
-
         <button
           onClick={() => setCartOpen(true)}
-          className="relative ml-auto md:ml-0 flex items-center gap-2 px-4 py-2 rounded-full bg-[#d4a24c]/10 border border-[#d4a24c]/40 text-[#d4a24c] font-bold text-sm hover:bg-[#d4a24c]/20 hover:scale-105 active:scale-95 transition-all"
+          className="relative ml-auto flex items-center gap-2 px-4 py-2 rounded-full bg-[#e05c3a]/10 border border-[#e05c3a]/40 text-[#f07a4a] font-bold text-sm hover:bg-[#e05c3a]/20 hover:scale-105 active:scale-95 transition-all"
         >
           <IconCart />
           <span className="hidden sm:inline">Keranjang</span>
           {totalQty > 0 && (
-            <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 rounded-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] text-xs font-extrabold flex items-center justify-center">
+            <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 rounded-full bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white text-xs font-extrabold flex items-center justify-center">
               {totalQty}
             </span>
           )}
@@ -367,149 +396,157 @@ export default function HomePage() {
       </header>
 
       <main className="pt-24">
-        {/* HERO — tanpa judul text */}
+        {/* HERO */}
         <section className="relative min-h-[55vh] flex flex-col justify-end px-4 sm:px-8 pt-16 pb-12 overflow-hidden">
           <div
-            className="absolute inset-0 opacity-25 bg-cover bg-center"
+            className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage:
-                "radial-gradient(circle at 75% 30%, rgba(212,162,76,0.16), transparent 55%), radial-gradient(circle at 15% 80%, rgba(212,162,76,0.08), transparent 50%), url('https://cdn.zass.in/GsBeAoEP8F.png",
+              backgroundImage: "url('https://cdn.zass.in/GsBeAoEP8F.png')",
             }}
           />
 
-          {/* Tombol Lihat Menu di bawah */}
           <Reveal className="relative z-10">
             <a
               href="#menu"
-              className="btn-pulse inline-flex items-center gap-2 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold px-6 py-3 rounded-full shadow-lg shadow-[#d4a24c]/40 hover:-translate-y-1 hover:scale-105 active:scale-95 transition-all"
+              className="inline-flex items-center gap-1.5 bg-[#1a1714] hover:bg-[#241f1a] text-[#f4ede2] font-semibold text-xs tracking-wide px-4 py-2.5 rounded-full hover:-translate-y-0.5 active:scale-95 transition-all"
             >
-              Lihat Menu <IconArrowDown />
+              Menu
+              <IconArrowDown />
             </a>
           </Reveal>
         </section>
 
         {/* MENU */}
-        <section id="menu" className="px-4 sm:px-8 py-12 max-w-6xl mx-auto">
-          {/* Judul Menu Pilihan */}
+        <section id="menu" className="px-3 sm:px-8 py-10 max-w-6xl mx-auto">
           <Reveal className="mb-6">
-            <p className="text-xs tracking-[0.3em] text-[#d4a24c] uppercase mb-2">
-              Menu Pilihan
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#f4ede2]">
-              BAROCKAH <span className="text-[#d4a24c]">ALWAYS</span>
-            </h2>
+            <div className="flex flex-col gap-4 pb-4 border-b border-[#e05c3a]/20 relative">
+              <div>
+                <p className="text-[10px] tracking-[0.3em] text-[#f07a4a] uppercase mb-1 font-bold">
+                  MENU MAKANAN
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-[#f4ede2]">
+                  BAROKAH <span className="text-[#f07a4a]">ALWAYS</span>
+                </h2>
+              </div>
+
+              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:justify-start">
+                {FILTERS.map(({ k, l, Icon }) => (
+                  <button
+                    key={k}
+                    onClick={() => setFilter(k)}
+                    className={`btn-shine flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all hover:scale-105 active:scale-95 ${
+                      filter === k
+                        ? "bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white shadow-lg shadow-[#e05c3a]/30"
+                        : "bg-[#1a1714] text-[#9c948a] hover:text-[#f4ede2] hover:bg-[#241f1a]"
+                    }`}
+                  >
+                    <Icon />
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
           </Reveal>
 
-          {/* Filter */}
-          <Reveal delay={0.1} className="flex gap-2 mb-8 overflow-x-auto pb-2">
-            {[
-              { k: "all", l: "Semua" },
-              { k: "minuman", l: "Minuman" },
-              { k: "makanan", l: "Makanan" },
-            ].map((f) => (
-              <button
-                key={f.k}
-                onClick={() => setFilter(f.k)}
-                className={`btn-shine px-5 py-2 rounded-full border text-sm font-semibold whitespace-nowrap transition-all hover:scale-105 active:scale-95 ${
-                  filter === f.k
-                    ? "bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] border-[#d4a24c] shadow-lg shadow-[#d4a24c]/30"
-                    : "border-[#d4a24c]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#d4a24c]"
-                }`}
-              >
-                {f.l}
-              </button>
-            ))}
-          </Reveal>
-
-          {/* Grid */}
           {filteredMenus.length === 0 ? (
             <p className="text-center py-16 text-[#9c948a]">Menu tidak ditemukan</p>
           ) : (
-            <div key={filter} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredMenus.map((m, idx) => (
-                <Reveal key={m.id} delay={idx * 0.06}>
-                  <article className="menu-card-enter group bg-gradient-to-b from-[#d4a24c]/5 to-[#131110] border border-[#d4a24c]/20 rounded-2xl overflow-hidden hover:-translate-y-2 hover:border-[#d4a24c]/50 hover:shadow-2xl hover:shadow-[#d4a24c]/20 transition-all duration-300 flex flex-col h-full">
-                    <div className="relative aspect-square overflow-hidden bg-[#1a1714]">
-                      {m.image_url ? (
-                        <img
-                          src={m.image_url}
-                          alt={m.name}
-                          loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[#9c948a]">
-                          <IconFood />
-                        </div>
-                      )}
-                      <span className="absolute top-3 left-3 bg-[#0b0a08]/85 backdrop-blur px-3 py-1.5 rounded-full text-[#d4a24c] text-xs font-semibold border border-[#d4a24c]/30 flex items-center gap-1.5">
-                        {m.category === "minuman" ? <IconCoffee /> : <IconFood />}
-                        {m.category === "minuman" ? "Minuman" : "Makanan"}
-                      </span>
-                      {m.is_favorite && (
-                        <span className="absolute top-3 right-3 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] text-[10px] font-extrabold px-2.5 py-1 rounded-full tracking-wider">
-                          FAVORIT
-                        </span>
-                      )}
-                    </div>
+            <div key={filter} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {filteredMenus.map((m, idx) => {
+                const { Icon: CatIcon, label: catLabel } = catMeta(m.category);
+                return (
+                  <Reveal key={m.id} delay={idx * 0.05}>
+                    <article className="menu-card-enter group bg-gradient-to-b from-[#e05c3a]/5 to-[#131110] border border-[#e05c3a]/20 rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:border-[#e05c3a]/50 hover:shadow-2xl hover:shadow-[#e05c3a]/20 transition-all duration-300 flex flex-col h-full">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-[#1a1714]">
+                        {m.image_url ? (
+                          <img
+                            src={m.image_url}
+                            alt={m.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[#9c948a]">
+                            <CatIcon />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#131110] via-transparent to-transparent pointer-events-none" />
 
-                    <div className="p-5 flex flex-col flex-1">
-                      <div className="flex items-center gap-2 text-xs text-[#9c948a] mb-2">
-                        <div className="flex text-[#d4a24c] gap-0.5">
-                          {Array(5).fill(0).map((_, i) => <IconStar key={i} />)}
-                        </div>
-                        <span>{Number(m.rating || 4.7).toFixed(1)}</span>
+                        <span className="absolute top-2 left-2 bg-[#0b0a08]/85 backdrop-blur px-2 py-1 rounded-full text-[#f07a4a] text-[10px] font-bold tracking-wider uppercase flex items-center gap-1 border border-[#e05c3a]/20">
+                          <CatIcon />
+                          {catLabel}
+                        </span>
+                        {m.is_favorite && (
+                          <span className="absolute top-2 right-2 bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white text-[9px] font-extrabold px-2 py-1 rounded-md tracking-wider uppercase">
+                            Favorit
+                          </span>
+                        )}
                       </div>
-                      <h3 className="text-lg font-bold mb-2 group-hover:text-[#e8bd6e] transition-colors">
-                        {m.name}
-                      </h3>
-                      <p className="text-sm text-[#9c948a] line-clamp-2 flex-1 mb-4">
-                        {m.description}
-                      </p>
-                      <div className="flex items-center justify-between pt-4 border-t border-[#d4a24c]/20">
-                        <div>
-                          <p className="text-[10px] text-[#9c948a] uppercase tracking-wider font-bold">
-                            Harga
-                          </p>
-                          <p className="text-[#d4a24c] font-bold text-lg">
-                            {rupiah(m.price)}
-                          </p>
+
+                      <div className="p-3 sm:p-4 flex flex-col flex-1 -mt-6 relative z-10">
+                        <div className="flex items-center gap-1.5 text-[10px] text-[#9c948a] mb-1">
+                          <div className="flex text-[#d4a24c] gap-0.5">
+                            {Array(5).fill(0).map((_, i) => <IconStar key={i} />)}
+                          </div>
+                          <span>{Number(m.rating || 4.7).toFixed(1)}</span>
                         </div>
-                        <button
-                          onClick={() => handleAdd(m)}
-                          className="w-11 h-11 rounded-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] flex items-center justify-center shadow-lg shadow-[#d4a24c]/40 hover:rotate-90 hover:scale-125 active:scale-95 transition-all duration-300"
-                          aria-label={`Tambah ${m.name}`}
-                        >
-                          <IconPlus />
-                        </button>
+                        <h3 className="text-sm sm:text-base font-bold mb-1 group-hover:text-[#f07a4a] transition-colors line-clamp-1">
+                          {m.name}
+                        </h3>
+                        <p className="text-[11px] sm:text-xs text-[#9c948a] line-clamp-2 flex-1 mb-3">
+                          {m.description}
+                        </p>
+                        <div className="flex items-center justify-between pt-2.5 border-t border-[#e05c3a]/15">
+                          <div>
+                            <p className="text-[8px] text-[#9c948a] uppercase tracking-wider font-bold">
+                              Harga
+                            </p>
+                            <p className="text-[#f07a4a] font-bold text-sm sm:text-base">
+                              {rupiah(m.price)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleAdd(m)}
+                            className="w-9 h-9 rounded-full bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white flex items-center justify-center shadow-lg shadow-[#e05c3a]/40 hover:rotate-90 hover:scale-110 active:scale-95 transition-all duration-300"
+                            aria-label={`Tambah ${m.name}`}
+                          >
+                            <IconPlus />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                </Reveal>
-              ))}
+                    </article>
+                  </Reveal>
+                );
+              })}
             </div>
           )}
         </section>
       </main>
 
-      {/* FOOTER */}
-      <footer className="px-4 sm:px-8 py-8 border-t border-[#d4a24c]/20 text-center text-sm text-[#9c948a]">
-        © {new Date().getFullYear()} Warkop Barockah Always
+      <footer className="px-4 sm:px-8 py-8 border-t border-[#e05c3a]/20 text-center text-sm text-[#9c948a]">
+        © {new Date().getFullYear()} Warkop Barokah Always
       </footer>
+
+      {toast && (
+        <div className="toast-anim fixed bottom-6 left-1/2 -translate-x-1/2 bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white font-semibold text-sm px-5 py-3 rounded-full shadow-2xl shadow-[#e05c3a]/50 z-[400] flex items-center gap-2">
+          <IconCheck />
+          {toast}
+        </div>
+      )}
 
       {/* CART DRAWER */}
       <aside
-        className={`fixed top-0 right-0 h-full w-[min(400px,92vw)] bg-[#131110] border-l border-[#d4a24c]/20 z-[200] flex flex-col transition-transform duration-500 ${
+        className={`fixed top-0 right-0 h-full w-[min(400px,92vw)] bg-[#131110] border-l border-[#e05c3a]/20 z-[200] flex flex-col transition-transform duration-500 ${
           cartOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between p-5 border-b border-[#d4a24c]/20">
+        <div className="flex items-center justify-between p-5 border-b border-[#e05c3a]/20">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <IconCart /> Pesananmu
           </h3>
           <button
             onClick={() => setCartOpen(false)}
-            className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 text-[#9c948a] hover:text-[#d4a24c] hover:rotate-90 hover:scale-110 transition-all flex items-center justify-center"
+            className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 text-[#9c948a] hover:text-[#f07a4a] hover:rotate-90 hover:scale-110 transition-all flex items-center justify-center"
           >
             <IconClose />
           </button>
@@ -531,7 +568,7 @@ export default function HomePage() {
             cart.map((x, idx) => (
               <div
                 key={idx}
-                className="menu-card-enter grid grid-cols-[56px_1fr_auto] gap-3 items-center pb-3 border-b border-[#d4a24c]/20"
+                className="menu-card-enter grid grid-cols-[56px_1fr_auto] gap-3 items-center pb-3 border-b border-[#e05c3a]/20"
                 style={{ animationDelay: `${idx * 0.05}s` }}
               >
                 <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#1a1714] shrink-0">
@@ -547,7 +584,7 @@ export default function HomePage() {
                   <p className="font-semibold text-sm truncate">{x.name}</p>
                   <p className="text-xs text-[#9c948a]">{rupiah(x.price)}</p>
                   {x.variant && (
-                    <p className="text-[11px] text-[#d4a24c] italic mt-0.5">
+                    <p className="text-[11px] text-[#f07a4a] italic mt-0.5">
                       {variantLabel(x.variant)}
                     </p>
                   )}
@@ -555,14 +592,14 @@ export default function HomePage() {
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => changeQty(idx, -1)}
-                    className="w-7 h-7 rounded-full border border-[#d4a24c]/30 text-[#d4a24c] hover:bg-[#d4a24c] hover:text-[#1a1408] hover:scale-110 active:scale-90 transition-all flex items-center justify-center"
+                    className="w-7 h-7 rounded-full border border-[#e05c3a]/30 text-[#f07a4a] hover:bg-[#e05c3a] hover:text-white hover:scale-110 active:scale-90 transition-all flex items-center justify-center"
                   >
                     <IconMinus />
                   </button>
                   <span className="font-bold w-5 text-center text-sm">{x.qty}</span>
                   <button
                     onClick={() => changeQty(idx, 1)}
-                    className="w-7 h-7 rounded-full border border-[#d4a24c]/30 text-[#d4a24c] hover:bg-[#d4a24c] hover:text-[#1a1408] hover:scale-110 active:scale-90 transition-all flex items-center justify-center"
+                    className="w-7 h-7 rounded-full border border-[#e05c3a]/30 text-[#f07a4a] hover:bg-[#e05c3a] hover:text-white hover:scale-110 active:scale-90 transition-all flex items-center justify-center"
                   >
                     <IconPlus />
                   </button>
@@ -572,10 +609,10 @@ export default function HomePage() {
           )}
         </div>
 
-        <div className="p-5 border-t border-[#d4a24c]/20">
+        <div className="p-5 border-t border-[#e05c3a]/20">
           <div className="flex justify-between items-center mb-4">
             <span className="text-[#9c948a] text-sm">Total</span>
-            <strong className="text-2xl text-[#d4a24c]">{rupiah(totalPrice)}</strong>
+            <strong className="text-2xl text-[#f07a4a]">{rupiah(totalPrice)}</strong>
           </div>
           <button
             onClick={() => {
@@ -584,7 +621,7 @@ export default function HomePage() {
               setShowCheckout(true);
             }}
             disabled={cart.length === 0}
-            className="btn-pulse w-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="btn-pulse w-full bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             Pesan Sekarang <IconArrowRight />
           </button>
@@ -605,11 +642,11 @@ export default function HomePage() {
       {/* CHECKOUT MODAL */}
       {showCheckout && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="menu-card-enter bg-[#131110] border border-[#d4a24c]/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="p-5 border-b border-[#d4a24c]/20 flex justify-between items-start">
+          <div className="menu-card-enter bg-[#131110] border border-[#e05c3a]/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-5 border-b border-[#e05c3a]/20 flex justify-between items-start">
               <div>
                 <h3 className="font-bold text-lg">Konfirmasi Pesanan</h3>
-                <p className="text-[#d4a24c] font-bold text-sm mt-0.5">{rupiah(totalPrice)}</p>
+                <p className="text-[#f07a4a] font-bold text-sm mt-0.5">{rupiah(totalPrice)}</p>
               </div>
               <button
                 onClick={() => setShowCheckout(false)}
@@ -651,7 +688,7 @@ export default function HomePage() {
               )}
 
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-[#d4a24c] font-bold mb-2">
+                <label className="block text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-2">
                   Nama Kamu *
                 </label>
                 <input
@@ -659,12 +696,12 @@ export default function HomePage() {
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Contoh: Budi"
-                  className="w-full px-4 py-3 rounded-xl border border-[#d4a24c]/30 bg-transparent text-[#f4ede2] placeholder-[#9c948a] outline-none focus:border-[#d4a24c] focus:ring-2 focus:ring-[#d4a24c]/20 transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-[#e05c3a]/30 bg-transparent text-[#f4ede2] placeholder-[#9c948a] outline-none focus:border-[#f07a4a] focus:ring-2 focus:ring-[#e05c3a]/20 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-[#d4a24c] font-bold mb-2">
+                <label className="block text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-2">
                   Catatan (opsional)
                 </label>
                 <textarea
@@ -672,26 +709,26 @@ export default function HomePage() {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Contoh: jangan pakai pedas"
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border border-[#d4a24c]/30 bg-transparent text-[#f4ede2] placeholder-[#9c948a] outline-none focus:border-[#d4a24c] focus:ring-2 focus:ring-[#d4a24c]/20 transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-[#e05c3a]/30 bg-transparent text-[#f4ede2] placeholder-[#9c948a] outline-none focus:border-[#f07a4a] focus:ring-2 focus:ring-[#e05c3a]/20 transition-all resize-none"
                 />
               </div>
             </div>
 
-            <div className="p-5 border-t border-[#d4a24c]/20 flex gap-3">
+            <div className="p-5 border-t border-[#e05c3a]/20 flex gap-3">
               <button
                 onClick={() => setShowCheckout(false)}
-                className="px-5 py-3 rounded-full border border-[#d4a24c]/30 text-[#9c948a] font-semibold hover:text-[#f4ede2] hover:border-[#d4a24c] hover:scale-105 active:scale-95 transition-all"
+                className="px-5 py-3 rounded-full border border-[#e05c3a]/30 text-[#9c948a] font-semibold hover:text-[#f4ede2] hover:border-[#f07a4a] hover:scale-105 active:scale-95 transition-all"
               >
                 Batal
               </button>
               <button
                 onClick={submitOrder}
                 disabled={submitting || !tableNumber}
-                className="flex-1 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="flex-1 bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-[#1a1408]/30 border-t-[#1a1408] rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Mengirim...
                   </>
                 ) : (
@@ -706,15 +743,15 @@ export default function HomePage() {
       {/* OPTION MODAL */}
       {optionModal && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="menu-card-enter bg-[#131110] border border-[#d4a24c]/30 rounded-2xl w-full max-w-md">
-            <div className="p-5 border-b border-[#d4a24c]/20 flex justify-between items-start">
+          <div className="menu-card-enter bg-[#131110] border border-[#e05c3a]/30 rounded-2xl w-full max-w-md">
+            <div className="p-5 border-b border-[#e05c3a]/20 flex justify-between items-start">
               <div className="flex items-start gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-lg bg-[#d4a24c]/10 text-[#d4a24c] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-[#e05c3a]/10 text-[#f07a4a] flex items-center justify-center shrink-0">
                   <IconCoffee />
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-bold text-lg truncate">{optionModal.name}</h3>
-                  <p className="text-[#d4a24c] font-bold text-sm">{rupiah(optionModal.price)}</p>
+                  <p className="text-[#f07a4a] font-bold text-sm">{rupiah(optionModal.price)}</p>
                 </div>
               </div>
               <button
@@ -726,7 +763,7 @@ export default function HomePage() {
             </div>
             <div className="p-5 space-y-5">
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-[#d4a24c] font-bold mb-3">
+                <p className="text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-3">
                   Pilih Suhu
                 </p>
                 <div className="flex gap-2">
@@ -736,8 +773,8 @@ export default function HomePage() {
                       onClick={() => setSelectedTemp(t)}
                       className={`flex-1 py-3 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
                         selectedTemp === t
-                          ? "bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] border-[#d4a24c] shadow-lg shadow-[#d4a24c]/30"
-                          : "border-[#d4a24c]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#d4a24c]"
+                          ? "bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white border-[#f07a4a] shadow-lg shadow-[#e05c3a]/30"
+                          : "border-[#e05c3a]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#f07a4a]"
                       }`}
                     >
                       {t}
@@ -746,7 +783,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-[#d4a24c] font-bold mb-3">
+                <p className="text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-3">
                   Pilih Gula
                 </p>
                 <div className="flex gap-2">
@@ -756,8 +793,8 @@ export default function HomePage() {
                       onClick={() => setSelectedSugar(s)}
                       className={`flex-1 py-3 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
                         selectedSugar === s
-                          ? "bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] border-[#d4a24c] shadow-lg shadow-[#d4a24c]/30"
-                          : "border-[#d4a24c]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#d4a24c]"
+                          ? "bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white border-[#f07a4a] shadow-lg shadow-[#e05c3a]/30"
+                          : "border-[#e05c3a]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#f07a4a]"
                       }`}
                     >
                       {s}
@@ -766,16 +803,16 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="p-5 border-t border-[#d4a24c]/20 flex gap-3">
+            <div className="p-5 border-t border-[#e05c3a]/20 flex gap-3">
               <button
                 onClick={() => setOptionModal(null)}
-                className="px-5 py-3 rounded-full border border-[#d4a24c]/30 text-[#9c948a] font-semibold hover:text-[#f4ede2] hover:border-[#d4a24c] hover:scale-105 active:scale-95 transition-all"
+                className="px-5 py-3 rounded-full border border-[#e05c3a]/30 text-[#9c948a] font-semibold hover:text-[#f4ede2] hover:border-[#f07a4a] hover:scale-105 active:scale-95 transition-all"
               >
                 Batal
               </button>
               <button
                 onClick={confirmOption}
-                className="flex-1 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="flex-1 bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 Tambah ke Keranjang
               </button>
@@ -787,7 +824,7 @@ export default function HomePage() {
       {/* SUCCESS MODAL */}
       {successOrder && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="menu-card-enter bg-[#131110] border border-[#d4a24c]/30 rounded-2xl w-full max-w-sm p-8 text-center">
+          <div className="menu-card-enter bg-[#131110] border border-[#e05c3a]/30 rounded-2xl w-full max-w-sm p-8 text-center">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 mx-auto flex items-center justify-center text-white mb-5 shadow-lg shadow-green-500/30">
               <IconCheck />
             </div>
@@ -795,19 +832,19 @@ export default function HomePage() {
             <p className="text-[#9c948a] mb-4 text-sm">
               Pesananmu sedang diproses dapur.
             </p>
-            <div className="inline-flex items-center gap-2 bg-[#d4a24c]/10 border border-[#d4a24c]/30 rounded-full px-4 py-2 mb-6">
+            <div className="inline-flex items-center gap-2 bg-[#e05c3a]/10 border border-[#e05c3a]/30 rounded-full px-4 py-2 mb-6">
               <IconMapPin />
-              <span className="text-[#d4a24c] font-bold text-sm">
+              <span className="text-[#f07a4a] font-bold text-sm">
                 Meja {successOrder.table_number}
               </span>
-              <span className="text-[#d4a24c]/50">·</span>
-              <span className="text-[#d4a24c] font-bold text-sm">
+              <span className="text-[#f07a4a]/50">·</span>
+              <span className="text-[#f07a4a] font-bold text-sm">
                 {rupiah(successOrder.total)}
               </span>
             </div>
             <button
               onClick={() => setSuccessOrder(null)}
-              className="w-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="w-full bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               Pesan Lagi
             </button>
@@ -816,4 +853,4 @@ export default function HomePage() {
       )}
     </div>
   );
-  }
+}
