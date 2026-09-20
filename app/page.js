@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 /* ========== ICON SVG ========== */
@@ -73,34 +73,53 @@ const IconStar = () => (
   </svg>
 );
 
-/* ========== TYPEWRITER HOOK ========== */
-function useTypewriter(text, speed = 80, startDelay = 300) {
-  const [displayed, setDisplayed] = useState("");
-  const [done, setDone] = useState(false);
+/* ========== HOOK: REVEAL ON SCROLL ========== */
+function useRevealOnScroll() {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    setDisplayed("");
-    setDone(false);
-    let i = 0;
-    let timer;
-    const startTimer = setTimeout(() => {
-      timer = setInterval(() => {
-        i++;
-        setDisplayed(text.slice(0, i));
-        if (i >= text.length) {
-          clearInterval(timer);
-          setDone(true);
-        }
-      }, speed);
-    }, startDelay);
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisible(true);
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -60px 0px" }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
-    return () => {
-      clearTimeout(startTimer);
-      clearInterval(timer);
-    };
-  }, [text, speed, startDelay]);
+  return { ref, visible };
+}
 
-  return { displayed, done };
+/* ========== KOMPONEN: REVEAL WRAPPER ========== */
+function Reveal({ children, delay = 0, className = "" }) {
+  const { ref, visible } = useRevealOnScroll();
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(40px)",
+        transition: `opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1) ${delay}s, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) ${delay}s`,
+        willChange: "opacity, transform",
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export default function HomePage() {
@@ -117,10 +136,6 @@ export default function HomePage() {
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [successOrder, setSuccessOrder] = useState(null);
-
-  // TYPEWRITER untuk judul
-  const line1 = useTypewriter("WARKOP", 90, 300);
-  const line2 = useTypewriter("BAROCKAH ALWAYS", 70, 1100);
 
   useEffect(() => {
     (async () => {
@@ -255,20 +270,6 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#0b0a08] text-[#f4ede2]">
       {/* ============ GLOBAL ANIMATION STYLES ============ */}
       <style jsx global>{`
-        /* Kursor ketik */
-        @keyframes blink {
-          0%, 49% { opacity: 1; }
-          50%, 100% { opacity: 0; }
-        }
-        .type-cursor::after {
-          content: "|";
-          display: inline-block;
-          margin-left: 2px;
-          color: #d4a24c;
-          animation: blink 0.9s steps(1) infinite;
-          font-weight: 400;
-        }
-
         /* Efek silau putih pada button filter */
         @keyframes shineSweep {
           0% { left: -100%; }
@@ -329,14 +330,13 @@ export default function HomePage() {
       `}</style>
 
       {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-4 px-4 sm:px-8 py-4 bg-[#0b0a08]/90 backdrop-blur-md border-b border-[#d4a24c]/20">
-        <a href="#top" className="flex items-center gap-2 text-[#d4a24c] font-bold text-lg tracking-wider shrink-0 hover:scale-105 transition-transform">
+      <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-4 px-4 sm:px-8 py-3 bg-[#0b0a08]/90 backdrop-blur-md border-b border-[#d4a24c]/20">
+        <a href="#top" className="flex items-center gap-3 text-[#d4a24c] font-bold text-lg tracking-wider shrink-0 hover:scale-[1.02] transition-transform">
           <img
             src="https://cdn.zass.in/3JXTmgsKRM.png"
             alt="Logo Barockah"
-            className="w-8 h-8 object-contain"
+            className="h-12 sm:h-14 w-auto object-contain drop-shadow-[0_0_12px_rgba(212,162,76,0.45)]"
           />
-          <span className="hidden sm:inline">BAROCKAH</span>
         </a>
 
         {tableNumber && (
@@ -366,9 +366,9 @@ export default function HomePage() {
         </button>
       </header>
 
-      <main className="pt-20">
-        {/* HERO */}
-        <section className="relative min-h-[70vh] flex flex-col justify-end px-4 sm:px-8 pt-16 pb-12 overflow-hidden">
+      <main className="pt-24">
+        {/* HERO — tanpa judul text */}
+        <section className="relative min-h-[55vh] flex flex-col justify-end px-4 sm:px-8 pt-16 pb-12 overflow-hidden">
           <div
             className="absolute inset-0 opacity-25 bg-cover bg-center"
             style={{
@@ -377,44 +377,31 @@ export default function HomePage() {
             }}
           />
 
-          {/* Judul dengan animasi mengetik */}
-          <div className="relative z-10 max-w-2xl">
-            <h1 className="font-bold text-[clamp(2.4rem,7vw,4.5rem)] leading-[1.05] mb-2 text-[#f4ede2]">
-              <span className={line1.done ? "" : "type-cursor"}>
-                {line1.displayed}
-              </span>
-              <br />
-              <span className={`text-[#d4a24c] ${line2.done ? "" : "type-cursor"}`}>
-                {line2.displayed}
-              </span>
-            </h1>
-          </div>
-
-          {/* Tombol Lihat Menu di bawah, dengan jarak */}
-          <div className="relative z-10 mt-12">
+          {/* Tombol Lihat Menu di bawah */}
+          <Reveal className="relative z-10">
             <a
               href="#menu"
               className="btn-pulse inline-flex items-center gap-2 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold px-6 py-3 rounded-full shadow-lg shadow-[#d4a24c]/40 hover:-translate-y-1 hover:scale-105 active:scale-95 transition-all"
             >
               Lihat Menu <IconArrowDown />
             </a>
-          </div>
+          </Reveal>
         </section>
 
         {/* MENU */}
         <section id="menu" className="px-4 sm:px-8 py-12 max-w-6xl mx-auto">
           {/* Judul Menu Pilihan */}
-          <div className="mb-6">
+          <Reveal className="mb-6">
             <p className="text-xs tracking-[0.3em] text-[#d4a24c] uppercase mb-2">
               Menu Pilihan
             </p>
             <h2 className="text-2xl sm:text-3xl font-bold text-[#f4ede2]">
               BAROCKAH <span className="text-[#d4a24c]">ALWAYS</span>
             </h2>
-          </div>
+          </Reveal>
 
           {/* Filter */}
-          <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+          <Reveal delay={0.1} className="flex gap-2 mb-8 overflow-x-auto pb-2">
             {[
               { k: "all", l: "Semua" },
               { k: "minuman", l: "Minuman" },
@@ -432,7 +419,7 @@ export default function HomePage() {
                 {f.l}
               </button>
             ))}
-          </div>
+          </Reveal>
 
           {/* Grid */}
           {filteredMenus.length === 0 ? (
@@ -440,67 +427,65 @@ export default function HomePage() {
           ) : (
             <div key={filter} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredMenus.map((m, idx) => (
-                <article
-                  key={m.id}
-                  className="menu-card-enter group bg-gradient-to-b from-[#d4a24c]/5 to-[#131110] border border-[#d4a24c]/20 rounded-2xl overflow-hidden hover:-translate-y-2 hover:border-[#d4a24c]/50 hover:shadow-2xl hover:shadow-[#d4a24c]/20 transition-all duration-300 flex flex-col"
-                  style={{ animationDelay: `${idx * 0.06}s` }}
-                >
-                  <div className="relative aspect-square overflow-hidden bg-[#1a1714]">
-                    {m.image_url ? (
-                      <img
-                        src={m.image_url}
-                        alt={m.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[#9c948a]">
-                        <IconFood />
-                      </div>
-                    )}
-                    <span className="absolute top-3 left-3 bg-[#0b0a08]/85 backdrop-blur px-3 py-1.5 rounded-full text-[#d4a24c] text-xs font-semibold border border-[#d4a24c]/30 flex items-center gap-1.5">
-                      {m.category === "minuman" ? <IconCoffee /> : <IconFood />}
-                      {m.category === "minuman" ? "Minuman" : "Makanan"}
-                    </span>
-                    {m.is_favorite && (
-                      <span className="absolute top-3 right-3 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] text-[10px] font-extrabold px-2.5 py-1 rounded-full tracking-wider">
-                        FAVORIT
+                <Reveal key={m.id} delay={idx * 0.06}>
+                  <article className="menu-card-enter group bg-gradient-to-b from-[#d4a24c]/5 to-[#131110] border border-[#d4a24c]/20 rounded-2xl overflow-hidden hover:-translate-y-2 hover:border-[#d4a24c]/50 hover:shadow-2xl hover:shadow-[#d4a24c]/20 transition-all duration-300 flex flex-col h-full">
+                    <div className="relative aspect-square overflow-hidden bg-[#1a1714]">
+                      {m.image_url ? (
+                        <img
+                          src={m.image_url}
+                          alt={m.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[#9c948a]">
+                          <IconFood />
+                        </div>
+                      )}
+                      <span className="absolute top-3 left-3 bg-[#0b0a08]/85 backdrop-blur px-3 py-1.5 rounded-full text-[#d4a24c] text-xs font-semibold border border-[#d4a24c]/30 flex items-center gap-1.5">
+                        {m.category === "minuman" ? <IconCoffee /> : <IconFood />}
+                        {m.category === "minuman" ? "Minuman" : "Makanan"}
                       </span>
-                    )}
-                  </div>
+                      {m.is_favorite && (
+                        <span className="absolute top-3 right-3 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] text-[10px] font-extrabold px-2.5 py-1 rounded-full tracking-wider">
+                          FAVORIT
+                        </span>
+                      )}
+                    </div>
 
-                  <div className="p-5 flex flex-col flex-1">
-                    <div className="flex items-center gap-2 text-xs text-[#9c948a] mb-2">
-                      <div className="flex text-[#d4a24c] gap-0.5">
-                        {Array(5).fill(0).map((_, i) => <IconStar key={i} />)}
+                    <div className="p-5 flex flex-col flex-1">
+                      <div className="flex items-center gap-2 text-xs text-[#9c948a] mb-2">
+                        <div className="flex text-[#d4a24c] gap-0.5">
+                          {Array(5).fill(0).map((_, i) => <IconStar key={i} />)}
+                        </div>
+                        <span>{Number(m.rating || 4.7).toFixed(1)}</span>
                       </div>
-                      <span>{Number(m.rating || 4.7).toFixed(1)}</span>
-                    </div>
-                    <h3 className="text-lg font-bold mb-2 group-hover:text-[#e8bd6e] transition-colors">
-                      {m.name}
-                    </h3>
-                    <p className="text-sm text-[#9c948a] line-clamp-2 flex-1 mb-4">
-                      {m.description}
-                    </p>
-                    <div className="flex items-center justify-between pt-4 border-t border-[#d4a24c]/20">
-                      <div>
-                        <p className="text-[10px] text-[#9c948a] uppercase tracking-wider font-bold">
-                          Harga
-                        </p>
-                        <p className="text-[#d4a24c] font-bold text-lg">
-                          {rupiah(m.price)}
-                        </p>
+                      <h3 className="text-lg font-bold mb-2 group-hover:text-[#e8bd6e] transition-colors">
+                        {m.name}
+                      </h3>
+                      <p className="text-sm text-[#9c948a] line-clamp-2 flex-1 mb-4">
+                        {m.description}
+                      </p>
+                      <div className="flex items-center justify-between pt-4 border-t border-[#d4a24c]/20">
+                        <div>
+                          <p className="text-[10px] text-[#9c948a] uppercase tracking-wider font-bold">
+                            Harga
+                          </p>
+                          <p className="text-[#d4a24c] font-bold text-lg">
+                            {rupiah(m.price)}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleAdd(m)}
+                          className="w-11 h-11 rounded-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] flex items-center justify-center shadow-lg shadow-[#d4a24c]/40 hover:rotate-90 hover:scale-125 active:scale-95 transition-all duration-300"
+                          aria-label={`Tambah ${m.name}`}
+                        >
+                          <IconPlus />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleAdd(m)}
-                        className="w-11 h-11 rounded-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] flex items-center justify-center shadow-lg shadow-[#d4a24c]/40 hover:rotate-90 hover:scale-125 active:scale-95 transition-all duration-300"
-                        aria-label={`Tambah ${m.name}`}
-                      >
-                        <IconPlus />
-                      </button>
                     </div>
-                  </div>
-                </article>
+                  </article>
+                </Reveal>
               ))}
             </div>
           )}
