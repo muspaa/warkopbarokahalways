@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "../../../lib/supabaseClient";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -10,48 +8,82 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const [debugInfo, setDebugInfo] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   async function handleLogin(e) {
     e.preventDefault();
     setError("");
-    setDebugInfo("");
+    setDebugInfo("Memulai login...\n");
     setLoading(true);
 
     try {
-      // Cek env
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      setDebugInfo(`URL: ${url ? url.substring(0, 30) + "..." : "❌ KOSONG"}\nKEY: ${key ? "✅ ADA" : "❌ KOSONG"}`);
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password,
+      setDebugInfo(
+        `URL: ${url || "❌ KOSONG"}\n` +
+        `KEY: ${key ? "✅ ADA (" + key.substring(0, 20) + "...)" : "❌ KOSONG"}\n\n` +
+        `Mengirim request...`
+      );
+
+      if (!url || !key) {
+        setError("Env Supabase tidak terbaca di Vercel!");
+        setLoading(false);
+        return;
+      }
+
+      // Timeout 15 detik
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+
+      const res = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": key,
+        },
+        body: JSON.stringify({ email: email.trim(), password }),
+        signal: controller.signal,
       });
 
-      console.log("LOGIN DATA:", data);
-      console.log("LOGIN ERROR:", error);
+      clearTimeout(timeout);
 
-      setLoading(false);
+      const data = await res.json();
 
-      if (error) {
-        setError(`❌ ${error.message}`);
-        setDebugInfo((prev) => prev + `\n\nError code: ${error.status || "?"}`);
+      setDebugInfo((prev) =>
+        prev + `\n\nStatus: ${res.status}\nRespon: ${JSON.stringify(data).substring(0, 200)}`
+      );
+
+      if (!res.ok) {
+        setError(`❌ ${data.error_description || data.msg || data.error || "Login gagal"}`);
+        setLoading(false);
         return;
       }
 
-      if (!data?.session) {
-        setError("⚠️ Login sukses tapi session kosong");
-        return;
-      }
+      setDebugInfo((prev) => prev + "\n\n✅ Login sukses! Simpan session...");
 
-      setDebugInfo((prev) => prev + "\n\n✅ Login sukses, redirect...");
-      router.push("/admin");
-      router.refresh();
+      // Simpan session manual
+      if (data.access_token) {
+        localStorage.setItem("sb-access-token", data.access_token);
+        localStorage.setItem("sb-refresh-token", data.refresh_token);
+
+        setDebugInfo((prev) => prev + "\n\n🚀 Redirect ke /admin...");
+        setTimeout(() => {
+          window.location.href = "/admin";
+        }, 1000);
+      } else {
+        setError("Login sukses tapi token kosong");
+        setLoading(false);
+      }
     } catch (err) {
-      console.error("CATCH:", err);
+      console.error(err);
       setLoading(false);
-      setError(`💥 Error: ${err.message}`);
+      if (err.name === "AbortError") {
+        setError("⏱️ Timeout: Supabase tidak merespon dalam 15 detik");
+        setDebugInfo((prev) => prev + "\n\n❌ Request dibatalkan karena timeout");
+      } else {
+        setError(`💥 ${err.message}`);
+        setDebugInfo((prev) => prev + `\n\n❌ Error: ${err.message}`);
+      }
     }
   }
 
@@ -65,6 +97,7 @@ export default function AdminLogin() {
           <h1 className="text-2xl font-bold text-white">Admin Login</h1>
           <p className="text-sm text-slate-300 mt-2">Warkop Barockah Always</p>
         </div>
+
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
@@ -82,16 +115,19 @@ export default function AdminLogin() {
             required
             className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 outline-none focus:border-[#d4a24c] focus:ring-2 focus:ring-[#d4a24c]/30"
           />
+
           {error && (
-            <p className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 break-words">
+            <div className="text-sm text-red-200 bg-red-500/20 border border-red-500/40 rounded-xl px-4 py-3 break-words">
               {error}
-            </p>
+            </div>
           )}
+
           {debugInfo && (
-            <pre className="text-xs text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 whitespace-pre-wrap break-words font-mono">
+            <pre className="text-xs text-amber-200 bg-black/40 border border-amber-500/30 rounded-xl px-3 py-2 whitespace-pre-wrap break-words font-mono max-h-48 overflow-y-auto">
               {debugInfo}
             </pre>
           )}
+
           <button
             type="submit"
             disabled={loading}
