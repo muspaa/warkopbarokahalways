@@ -61,11 +61,47 @@ const IconArrowRight = () => (
     <polyline points="12 5 19 12 12 19" />
   </svg>
 );
+const IconArrowDown = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <polyline points="19 12 12 19 5 12" />
+  </svg>
+);
 const IconStar = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
   </svg>
 );
+
+/* ========== TYPEWRITER HOOK ========== */
+function useTypewriter(text, speed = 80, startDelay = 300) {
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    setDisplayed("");
+    setDone(false);
+    let i = 0;
+    let timer;
+    const startTimer = setTimeout(() => {
+      timer = setInterval(() => {
+        i++;
+        setDisplayed(text.slice(0, i));
+        if (i >= text.length) {
+          clearInterval(timer);
+          setDone(true);
+        }
+      }, speed);
+    }, startDelay);
+
+    return () => {
+      clearTimeout(startTimer);
+      clearInterval(timer);
+    };
+  }, [text, speed, startDelay]);
+
+  return { displayed, done };
+}
 
 export default function HomePage() {
   const [menus, setMenus] = useState([]);
@@ -81,6 +117,10 @@ export default function HomePage() {
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [successOrder, setSuccessOrder] = useState(null);
+
+  // TYPEWRITER untuk judul
+  const line1 = useTypewriter("WARKOP", 90, 300);
+  const line2 = useTypewriter("BAROCKAH ALWAYS", 70, 1100);
 
   useEffect(() => {
     (async () => {
@@ -215,44 +255,55 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#0b0a08] text-[#f4ede2]">
       {/* ============ GLOBAL ANIMATION STYLES ============ */}
       <style jsx global>{`
-        /* === ANIMASI TEXT BERJALAN (SHIMMER) === */
-        @keyframes shimmerMove {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
+        /* Kursor ketik */
+        @keyframes blink {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
         }
-        .text-shimmer {
+        .type-cursor::after {
+          content: "|";
+          display: inline-block;
+          margin-left: 2px;
+          color: #d4a24c;
+          animation: blink 0.9s steps(1) infinite;
+          font-weight: 400;
+        }
+
+        /* Efek silau putih pada button filter */
+        @keyframes shineSweep {
+          0% { left: -100%; }
+          60% { left: 120%; }
+          100% { left: 120%; }
+        }
+        .btn-shine {
+          position: relative;
+          overflow: hidden;
+        }
+        .btn-shine::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 60%;
+          height: 100%;
           background: linear-gradient(
-            90deg,
-            #d4a24c 0%,
-            #e8bd6e 25%,
-            #fff8e7 50%,
-            #e8bd6e 75%,
-            #d4a24c 100%
+            120deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.55) 50%,
+            transparent 100%
           );
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shimmerMove 3s linear infinite;
+          transform: skewX(-20deg);
+          pointer-events: none;
+        }
+        .btn-shine:hover::before {
+          animation: shineSweep 0.9s ease-out;
         }
 
-        /* === ANIMASI TEXT MASUK (LETTER RISE) === */
-        @keyframes titleFadeUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .title-line-1 {
-          animation: titleFadeUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-        .title-line-2 {
-          animation: titleFadeUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
-        }
-
-        /* === ANIMASI PRODUK MASUK (CARD FADE IN) === */
+        /* Kartu menu fade-in */
         @keyframes cardEnter {
           from {
             opacity: 0;
-            transform: translateY(30px) scale(0.95);
+            transform: translateY(30px) scale(0.96);
           }
           to {
             opacity: 1;
@@ -263,48 +314,28 @@ export default function HomePage() {
           animation: cardEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
-        /* === ANIMASI BUTTON (PULSE GLOW) === */
+        /* Pulse glow untuk tombol utama */
         @keyframes pulseGlow {
           0%, 100% {
             box-shadow: 0 8px 24px -8px rgba(212, 162, 76, 0.5);
           }
           50% {
-            box-shadow: 0 12px 32px -6px rgba(212, 162, 76, 0.8);
+            box-shadow: 0 12px 32px -6px rgba(212, 162, 76, 0.85);
           }
         }
         .btn-pulse {
           animation: pulseGlow 2.5s ease-in-out infinite;
-        }
-
-        /* === ANIMASI BUTTON (RIPPLE) === */
-        @keyframes btnRipple {
-          to { transform: scale(4); opacity: 0; }
-        }
-
-        /* === ANIMASI BUTTON (ARROW SLIDE) === */
-        @keyframes arrowBounce {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(4px); }
-        }
-        .btn-arrow:hover svg:last-child {
-          animation: arrowBounce 0.6s ease-in-out infinite;
-        }
-
-        /* === ANIMASI BUTTON (SHAKE) === */
-        @keyframes shakeX {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-4px); }
-          75% { transform: translateX(4px); }
-        }
-        .btn-shake:hover {
-          animation: shakeX 0.3s ease-in-out;
         }
       `}</style>
 
       {/* HEADER */}
       <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-4 px-4 sm:px-8 py-4 bg-[#0b0a08]/90 backdrop-blur-md border-b border-[#d4a24c]/20">
         <a href="#top" className="flex items-center gap-2 text-[#d4a24c] font-bold text-lg tracking-wider shrink-0 hover:scale-105 transition-transform">
-          <IconCoffee />
+          <img
+            src="https://cdn.zass.in/3JXTmgsKRM.png"
+            alt="Logo Barockah"
+            className="w-8 h-8 object-contain"
+          />
           <span className="hidden sm:inline">BAROCKAH</span>
         </a>
 
@@ -337,7 +368,7 @@ export default function HomePage() {
 
       <main className="pt-20">
         {/* HERO */}
-        <section className="relative min-h-[60vh] flex items-center px-4 sm:px-8 py-16 overflow-hidden">
+        <section className="relative min-h-[70vh] flex flex-col justify-end px-4 sm:px-8 pt-16 pb-12 overflow-hidden">
           <div
             className="absolute inset-0 opacity-25 bg-cover bg-center"
             style={{
@@ -345,29 +376,43 @@ export default function HomePage() {
                 "radial-gradient(circle at 75% 30%, rgba(212,162,76,0.16), transparent 55%), radial-gradient(circle at 15% 80%, rgba(212,162,76,0.08), transparent 50%), url('https://cdn.zass.in/GsBeAoEP8F.png",
             }}
           />
+
+          {/* Judul dengan animasi mengetik */}
           <div className="relative z-10 max-w-2xl">
-            <p className="text-xs tracking-[0.3em] text-[#d4a24c] uppercase mb-3">
-            </p>
-            <h1 className="font-bold text-[clamp(2.4rem,7vw,4.5rem)] leading-[1.05] mb-5">
-              <span className="title-line-1 inline-block">WARKOP</span>
+            <h1 className="font-bold text-[clamp(2.4rem,7vw,4.5rem)] leading-[1.05] mb-2 text-[#f4ede2]">
+              <span className={line1.done ? "" : "type-cursor"}>
+                {line1.displayed}
+              </span>
               <br />
-              <span className="title-line-2 inline-block">
-                <span className="text-shimmer">BAROCKAH</span> ALWAYS
+              <span className={`text-[#d4a24c] ${line2.done ? "" : "type-cursor"}`}>
+                {line2.displayed}
               </span>
             </h1>
-            <p className="text-[#9c948a] text-base sm:text-lg mb-8 max-w-md">
-            </p>
+          </div>
+
+          {/* Tombol Lihat Menu di bawah, dengan jarak */}
+          <div className="relative z-10 mt-12">
             <a
               href="#menu"
-              className="btn-arrow btn-pulse group inline-flex items-center gap-2 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold px-6 py-3 rounded-full shadow-lg shadow-[#d4a24c]/40 hover:-translate-y-1 hover:scale-105 active:scale-95 transition-all"
+              className="btn-pulse inline-flex items-center gap-2 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold px-6 py-3 rounded-full shadow-lg shadow-[#d4a24c]/40 hover:-translate-y-1 hover:scale-105 active:scale-95 transition-all"
             >
-              Lihat Menu <IconArrowRight />
+              Lihat Menu <IconArrowDown />
             </a>
           </div>
         </section>
 
         {/* MENU */}
         <section id="menu" className="px-4 sm:px-8 py-12 max-w-6xl mx-auto">
+          {/* Judul Menu Pilihan */}
+          <div className="mb-6">
+            <p className="text-xs tracking-[0.3em] text-[#d4a24c] uppercase mb-2">
+              Menu Pilihan
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#f4ede2]">
+              BAROCKAH <span className="text-[#d4a24c]">ALWAYS</span>
+            </h2>
+          </div>
+
           {/* Filter */}
           <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
             {[
@@ -378,7 +423,7 @@ export default function HomePage() {
               <button
                 key={f.k}
                 onClick={() => setFilter(f.k)}
-                className={`btn-shake px-5 py-2 rounded-full border text-sm font-semibold whitespace-nowrap transition-all hover:scale-105 active:scale-95 ${
+                className={`btn-shine px-5 py-2 rounded-full border text-sm font-semibold whitespace-nowrap transition-all hover:scale-105 active:scale-95 ${
                   filter === f.k
                     ? "bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] border-[#d4a24c] shadow-lg shadow-[#d4a24c]/30"
                     : "border-[#d4a24c]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#d4a24c]"
@@ -554,7 +599,7 @@ export default function HomePage() {
               setShowCheckout(true);
             }}
             disabled={cart.length === 0}
-            className="btn-arrow btn-pulse w-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="btn-pulse w-full bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             Pesan Sekarang <IconArrowRight />
           </button>
@@ -657,7 +702,7 @@ export default function HomePage() {
               <button
                 onClick={submitOrder}
                 disabled={submitting || !tableNumber}
-                className="btn-arrow flex-1 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="flex-1 bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
