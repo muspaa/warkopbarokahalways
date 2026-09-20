@@ -384,9 +384,6 @@ export default function HomePage() {
           />
 
           <Reveal className="relative z-10">
-            <h1 className="text-3xl sm:text-5xl font-bold text-[#f4ede2] leading-tight mb-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]">
-              WARKOP <span className="text-[#f07a4a]">BAROKAH ALWAYS</span>
-            </h1>
 
             <a
               href="#menu"
@@ -663,13 +660,13 @@ export default function HomePage() {
 
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-2">
-                  Nama Kamu *
+                  Nama Kamu
                 </label>
                 <input
                   type="text"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Contoh: Budi"
+                  placeholder=""
                   className="w-full px-4 py-3 rounded-xl border border-[#e05c3a]/30 bg-transparent text-[#f4ede2] placeholder-[#9c948a] outline-none focus:border-[#f07a4a] focus:ring-2 focus:ring-[#e05c3a]/20 transition-all"
                 />
               </div>
@@ -681,7 +678,7 @@ export default function HomePage() {
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Contoh: jangan pakai pedas"
+                  placeholder=""
                   rows={2}
                   className="w-full px-4 py-3 rounded-xl border border-[#e05c3a]/30 bg-transparent text-[#f4ede2] placeholder-[#9c948a] outline-none focus:border-[#f07a4a] focus:ring-2 focus:ring-[#e05c3a]/20 transition-all resize-none"
                 />
@@ -738,7 +735,7 @@ export default function HomePage() {
             <div className="p-5 space-y-5">
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-3">
-                  Pilih Suhu
+                  Pilih 
                 </p>
                 <div className="flex gap-2">
                   {["Ice", "Hangat", "Panas"].map((t) => (
@@ -758,7 +755,7 @@ export default function HomePage() {
               </div>
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-3">
-                  Pilih Gula
+                  Pilih
                 </p>
                 <div className="flex gap-2">
                   {["Manis", "Biasa", "Pahit"].map((s) => (
