@@ -109,10 +109,11 @@ export default function AdminLayout({ children }) {
         setReady(true);
       }
     });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [pathname]);
 
-  // Tutup sidebar mobile saat pindah halaman
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
@@ -125,7 +126,7 @@ export default function AdminLayout({ children }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#d4a24c] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-12 h-12 border-4 border-[#e05c3a] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-slate-500 text-sm">Memuat...</p>
         </div>
       </div>
@@ -140,7 +141,6 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-slate-100 flex">
-      {/* ============ SIDEBAR OVERLAY (Mobile) ============ */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -148,21 +148,21 @@ export default function AdminLayout({ children }) {
         />
       )}
 
-      {/* ============ SIDEBAR ============ */}
       <aside
         className={`fixed top-0 left-0 h-full w-64 bg-slate-900 text-white z-50 flex flex-col transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
       >
-        {/* Logo */}
         <div className="p-5 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] flex items-center justify-center font-bold text-[#1a1408] text-lg">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] flex items-center justify-center font-bold text-white text-lg">
               W
             </div>
             <div>
-              <p className="font-bold text-sm">Barockah</p>
-              <p className="text-[10px] text-slate-400 uppercase tracking-wider">Admin Panel</p>
+              <p className="font-bold text-sm">Barokah</p>
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider">
+                Admin Panel
+              </p>
             </div>
           </div>
           <button
@@ -173,7 +173,6 @@ export default function AdminLayout({ children }) {
           </button>
         </div>
 
-        {/* Menu */}
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {MENU.map(({ href, label, Icon }) => {
             const active =
@@ -185,7 +184,7 @@ export default function AdminLayout({ children }) {
                 href={href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   active
-                    ? "bg-gradient-to-r from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] shadow-lg shadow-[#d4a24c]/20"
+                    ? "bg-gradient-to-r from-[#e05c3a] to-[#f07a4a] text-white shadow-lg shadow-[#e05c3a]/20"
                     : "text-slate-400 hover:bg-slate-800 hover:text-white"
                 }`}
               >
@@ -196,11 +195,14 @@ export default function AdminLayout({ children }) {
           })}
         </nav>
 
-        {/* User info + Logout */}
         <div className="p-3 border-t border-slate-800 space-y-1">
           <div className="px-3 py-2 rounded-xl bg-slate-800/50">
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Login sebagai</p>
-            <p className="text-xs text-slate-300 truncate">{user?.email || "Admin"}</p>
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+              Login sebagai
+            </p>
+            <p className="text-xs text-slate-300 truncate">
+              {user?.email || "Admin"}
+            </p>
           </div>
           <button
             onClick={handleLogout}
@@ -212,9 +214,7 @@ export default function AdminLayout({ children }) {
         </div>
       </aside>
 
-      {/* ============ MAIN CONTENT ============ */}
       <div className="flex-1 lg:ml-64 flex flex-col min-w-0">
-        {/* Top bar (mobile) */}
         <header className="lg:hidden sticky top-0 z-30 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -223,10 +223,12 @@ export default function AdminLayout({ children }) {
             <IconMenuMobile />
           </button>
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] flex items-center justify-center font-bold text-[#1a1408] text-xs shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] flex items-center justify-center font-bold text-white text-xs shrink-0">
               W
             </div>
-            <span className="font-semibold text-sm text-slate-800 truncate">Barockah Admin</span>
+            <span className="font-semibold text-sm text-slate-800 truncate">
+              Barokah Admin
+            </span>
           </div>
         </header>
 
