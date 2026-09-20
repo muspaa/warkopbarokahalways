@@ -118,13 +118,6 @@ function Reveal({ children, delay = 0, className = "" }) {
   );
 }
 
-function catLabel(cat) {
-  if (cat === "minuman") return "Minuman";
-  if (cat === "makanan") return "Makanan";
-  if (cat === "snack") return "Snack";
-  return "Menu";
-}
-
 export default function HomePage() {
   const [menus, setMenus] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -391,6 +384,10 @@ export default function HomePage() {
           />
 
           <Reveal className="relative z-10">
+            <h1 className="text-3xl sm:text-5xl font-bold text-[#f4ede2] leading-tight mb-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]">
+              WARKOP <span className="text-[#f07a4a]">BAROKAH ALWAYS</span>
+            </h1>
+
             <a
               href="#menu"
               className="inline-flex items-center gap-1.5 bg-[#1a1714] hover:bg-[#241f1a] text-[#f4ede2] font-semibold text-xs tracking-wide px-4 py-2.5 rounded-full hover:-translate-y-0.5 active:scale-95 transition-all"
@@ -454,9 +451,6 @@ export default function HomePage() {
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-[#131110] via-transparent to-transparent pointer-events-none" />
 
-                      <span className="absolute top-2 left-2 bg-[#0b0a08]/85 backdrop-blur px-2 py-1 rounded-full text-[#f07a4a] text-[10px] font-bold tracking-wider uppercase border border-[#e05c3a]/20">
-                        {catLabel(m.category)}
-                      </span>
                       {m.is_favorite && (
                         <span className="absolute top-2 right-2 bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white text-[9px] font-extrabold px-2 py-1 rounded-md tracking-wider uppercase">
                           Favorit
