@@ -1,3 +1,4 @@
+
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
@@ -30,13 +31,18 @@ export async function middleware(req) {
 
   const { pathname } = req.nextUrl;
 
+  // Halaman login: kalau sudah login, redirect ke /admin
   if (pathname === "/admin/login") {
     if (user) return NextResponse.redirect(new URL("/admin", req.url));
     return res;
   }
 
+  // Halaman /admin/* — KALAU BELUM LOGIN, redirect ke login
   if (pathname.startsWith("/admin")) {
-    if (!user) return NextResponse.redirect(new URL("/admin/login", req.url));
+    if (!user) {
+      // Cek juga di localStorage (fallback)
+      return NextResponse.redirect(new URL("/admin/login", req.url));
+    }
   }
 
   return res;
