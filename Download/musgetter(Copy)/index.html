@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Source Getter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0a05;
+      --panel: rgba(28, 18, 10, 0.92);
+      --border: #5a3a1a;
+      --border-light: #8a5a2a;
+      --text: #f0dcc8;
+      --muted: #c8a88a;
+      --dim: #8a6a4a;
+      --primary: #ff8c00;
+      --primary-glow: rgba(255, 140, 0, 0.3);
+      --danger: #ef4444;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    html, body {
+      min-height: 100%; min-height: 100dvh;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #0a0603; color: var(--text); line-height: 1.5;
+      -webkit-tap-highlight-color: transparent; overflow-x: hidden;
+    }
+    .bg-overlay {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: radial-gradient(ellipse at 30% 40%, rgba(40, 20, 5, 0.6) 0%, rgba(5, 3, 1, 0.95) 100%);
+    }
+
+    /* ===== LOADING AWAL KEREN ===== */
+    #initial-loader {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #0a0603;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    #initial-loader.hide {
+      opacity: 0; transform: scale(1.1); pointer-events: none;
+    }
+    #initial-loader .loader-logo {
+      font-size: 3.5rem; font-weight: 800;
+      background: linear-gradient(135deg, #ff8c00, #ffcc66, #ff8c00);
+      background-size: 200% 200%;
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent;
+      animation: gradShift 2s ease-in-out infinite;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+    @keyframes gradShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    #initial-loader .loader-sub {
+      font-size: 0.8rem; color: var(--dim); letter-spacing: 0.3em;
+      margin-bottom: 2rem;
+    }
+    #initial-loader .loader-bar-track {
+      width: 200px; height: 3px;
+      background: #1a0a05; border-radius: 999px;
+      overflow: hidden; position: relative;
+    }
+    #initial-loader .loader-bar-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #5a3a1a, #ff8c00);
+      border-radius: 999px;
+      transition: width 0.15s ease;
+    }
+    #initial-loader .loader-pct {
+      font-size: 0.6rem; color: var(--dim);
+      margin-top: 0.5rem; font-variant-numeric: tabular-nums;
+    }
+    #initial-loader .loader-dots {
+      display: flex; gap: 0.5rem; margin-top: 1rem;
+    }
+    #initial-loader .loader-dots span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--dim);
+      animation: dotPulse 1.4s ease-in-out infinite;
+    }
+    #initial-loader .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+    #initial-loader .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotPulse {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    .app {
+      position: relative; z-index: 2; min-height: 100dvh;
+      display: flex; flex-direction: column; width: 100%; max-width: 100vw; overflow-x: hidden;
+    }
+    header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 10, 5, 0.85);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      position: sticky; top: 0; z-index: 30;
+    }
+    .header-inner {
+      width: 100%; max-width: 720px; margin: 0 auto;
+      padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .brand-icon {
+      width: 2.1rem; height: 2.1rem; flex-shrink: 0; border-radius: 0.5rem;
+      background: linear-gradient(135deg, #3a1a0a, #6a3a1a);
+      border: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: center; color: var(--primary);
+    }
+    .brand { flex: 1; min-width: 0; }
+    .brand h1 { font-size: 0.9rem; font-weight: 700; color: var(--primary); line-height: 1.2; }
+    .brand p { font-size: 0.58rem; color: var(--dim); }
+    .token-badge {
+      display: flex; align-items: center; gap: 0.25rem;
+      background: rgba(255, 140, 0, 0.12);
+      border: 1px solid rgba(255, 140, 0, 0.35);
+      padding: 0.28rem 0.55rem; border-radius: 999px;
+      font-size: 0.68rem; font-weight: 700; color: var(--primary); flex-shrink: 0;
+    }
+    .top-hint {
+      background: rgba(255, 140, 0, 0.07);
+      border-bottom: 1px solid rgba(255, 140, 0, 0.18);
+      padding: 0.45rem 1rem; text-align: center;
+      font-size: 0.7rem; color: var(--muted);
+    }
+    .top-hint strong { color: var(--primary); }
+
+    main {
+      width: 100%; max-width: 720px; margin: 0 auto;
+      padding: 1.1rem 1rem calc(1.5rem + var(--safe-bottom)); flex: 1;
+    }
+    .hero { text-align: center; margin-bottom: 1rem; }
+    .badge {
+      display: inline-flex; border: 1px solid var(--border); background: rgba(28, 18, 10, 0.75);
+      padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.62rem; color: var(--muted); margin-bottom: 0.55rem;
+    }
+    .hero h2 {
+      font-size: 1.35rem; font-weight: 700; letter-spacing: -0.03em;
+      background: linear-gradient(180deg, #ffcc88 0%, #cc7000 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1.25;
+    }
+    .hero p { margin-top: 0.4rem; color: var(--muted); font-size: 0.78rem; }
+
+    .form-card {
+      border: 1px solid var(--border); background: var(--panel);
+      border-radius: 0.85rem; padding: 0.8rem; margin-bottom: 1rem; position: relative;
+    }
+    .form-card.locked::after {
+      content: ""; position: absolute; inset: 0; border-radius: 0.85rem;
+      background: rgba(8, 5, 3, 0.5); pointer-events: none;
+    }
+    .form-row { display: flex; flex-direction: column; gap: 0.55rem; }
+    .input-wrap { position: relative; width: 100%; }
+    .input-wrap svg {
+      position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+      width: 1rem; height: 1rem; color: var(--dim); pointer-events: none;
+    }
+    .input-wrap input {
+      width: 100%; border: 1px solid var(--border); background: rgba(8, 5, 3, 0.75);
+      border-radius: 0.65rem; padding: 0.7rem 0.85rem 0.7rem 2.35rem;
+      color: var(--text); font-size: 16px; outline: none;
+    }
+    .input-wrap input:focus { border-color: var(--primary); box-shadow: 0 0 16px var(--primary-glow); }
+    .input-wrap input::placeholder { color: var(--dim); }
+    .input-wrap input:disabled { opacity: 0.5; }
+    .btn-gen {
+      width: 100%; display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border-light);
+      background: linear-gradient(180deg, #5a3a1a, #2a1a0a);
+      color: var(--primary); font-weight: 600; font-size: 0.88rem;
+      padding: 0.75rem 1rem; border-radius: 0.65rem; cursor: pointer; -webkit-appearance: none;
+    }
+    .btn-gen:disabled { opacity: 0.45; cursor: not-allowed; }
+    .error-box {
+      margin-top: 0.55rem; border: 1px solid rgba(239,68,68,0.3);
+      background: rgba(239,68,68,0.1); color: #fca5a5;
+      padding: 0.5rem 0.7rem; border-radius: 0.5rem; font-size: 0.78rem; word-break: break-word;
+    }
+    .lock-notice {
+      text-align: center; font-size: 0.72rem; color: var(--dim);
+      margin-top: 0.45rem; padding: 0.3rem;
+    }
+    .lock-notice strong { color: var(--primary); }
+    .hidden { display: none !important; }
+
+    .card {
+      border: 1px solid var(--border); background: var(--panel);
+      border-radius: 0.85rem; overflow: hidden; margin-bottom: 0.9rem; width: 100%;
+    }
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.45rem;
+      padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); background: rgba(15, 10, 5, 0.85);
+    }
+    .card-head h3 { font-size: 0.82rem; font-weight: 600; color: var(--primary); }
+    .card-head .meta { font-size: 0.62rem; color: var(--dim); }
+
+    .gen-body { padding: 0.9rem; }
+    .gen-terminal-bar {
+      display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 0.7rem;
+      border-bottom: 1px solid var(--border); background: #0a0603;
+      font-family: ui-monospace, monospace; font-size: 0.62rem; color: var(--dim);
+    }
+    .dot { width: 0.45rem; height: 0.45rem; border-radius: 50%; flex-shrink: 0; }
+    .dot-r { background: #ef4444; opacity: 0.85; }
+    .dot-y { background: #eab308; opacity: 0.85; }
+    .dot-g { background: #22c55e; opacity: 0.85; }
+    .gen-target { font-family: ui-monospace, monospace; font-size: 0.68rem; color: var(--dim); margin-bottom: 0.7rem; word-break: break-all; }
+    .gen-target b { color: var(--primary); }
+    .gen-status { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.85rem; }
+    .spinner {
+      width: 1.35rem; height: 1.35rem; border: 2px solid var(--border);
+      border-top-color: var(--primary); border-radius: 50%;
+      animation: spin 0.8s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .gen-status h4 { font-size: 0.85rem; font-weight: 600; }
+    .gen-status p { font-size: 0.68rem; color: var(--dim); }
+    .progress-row { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .progress-track { height: 0.3rem; background: #1a0a05; border-radius: 999px; overflow: hidden; margin-bottom: 0.85rem; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #5a3a1a, #ff8c00); border-radius: 999px; transition: width 0.2s ease; }
+    .steps { list-style: none; display: flex; flex-direction: column; gap: 0.35rem; }
+    .steps li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.68rem; color: var(--dim); }
+    .steps li.done { color: var(--muted); text-decoration: line-through; opacity: 0.65; }
+    .steps li.active { color: var(--primary); font-weight: 500; }
+    .steps li.pending { opacity: 0.3; }
+    .step-ico {
+      width: 1.15rem; height: 1.15rem; border-radius: 0.28rem;
+      display: flex; align-items: center; justify-content: center; font-size: 0.52rem;
+      background: #1a0a05; flex-shrink: 0;
+    }
+    .steps li.done .step-ico, .steps li.active .step-ico { background: rgba(255, 140, 0, 0.15); color: var(--primary); }
+
+    .empty { text-align: center; padding: 1.6rem 1rem; color: var(--dim); }
+    .empty p { font-size: 0.82rem; color: var(--muted); }
+    .empty small { font-size: 0.68rem; color: var(--dim); display: block; margin-top: 0.25rem; }
+
+    .actions { display: flex; gap: 0.3rem; }
+    .btn-sm {
+      border: 1px solid var(--border); background: #1a0a05; color: var(--muted);
+      font-size: 0.62rem; font-weight: 500; padding: 0.3rem 0.5rem; border-radius: 0.35rem;
+      cursor: pointer; -webkit-appearance: none; white-space: nowrap;
+    }
+    .tag {
+      font-size: 0.52rem; font-weight: 700; letter-spacing: 0.04em;
+      padding: 0.1rem 0.3rem; border-radius: 0.22rem; text-transform: uppercase; flex-shrink: 0;
+    }
+    .tag-html { background: rgba(249,115,22,0.15); color: #fdba74; }
+    .tag-css { background: rgba(14,165,233,0.15); color: #7dd3fc; }
+    .tag-js { background: rgba(234,179,8,0.15); color: #fde047; }
+    .file-meta {
+      display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; padding: 0.45rem 0.8rem;
+      border-bottom: 1px solid var(--border); background: rgba(8, 5, 3, 0.5);
+      font-size: 0.62rem; color: var(--dim);
+    }
+    .file-meta a { color: var(--muted); word-break: break-all; }
+    .code-wrap { max-height: 45vh; overflow: auto; -webkit-overflow-scrolling: touch; background: rgba(6, 3, 1, 0.9); }
+    .code-table { width: 100%; border-collapse: collapse; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.68rem; line-height: 1.45; }
+    .code-table td { padding: 0 0.5rem; vertical-align: top; }
+    .code-table .ln { width: 2.2rem; text-align: right; color: #5a3a1a; user-select: none; border-right: 1px solid #1a0a05; background: rgba(12, 8, 4, 0.5); white-space: nowrap; }
+    .code-table .lc { color: #dcc8b8; white-space: pre; padding-left: 0.55rem; }
+
+    .file-list { max-height: 260px; overflow: auto; -webkit-overflow-scrolling: touch; padding: 0.35rem; }
+    .file-group-label { font-size: 0.52rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dim); padding: 0.25rem 0.4rem; }
+    .file-item {
+      width: 100%; display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem;
+      border-radius: 0.4rem; border: 1px solid transparent; background: transparent;
+      color: inherit; text-align: left; cursor: pointer; -webkit-appearance: none;
+    }
+    .file-item.active { background: rgba(255, 140, 0, 0.08); border-color: rgba(255, 140, 0, 0.22); }
+    .file-item .name { font-size: 0.72rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-item .sub { font-size: 0.55rem; color: var(--dim); margin-top: 0.05rem; }
+
+    .history-section { margin-top: 0.5rem; }
+    .history-list { padding: 0.4rem; max-height: 280px; overflow: auto; }
+    .history-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.55rem 0.5rem; border-radius: 0.45rem;
+      border: 1px solid transparent; margin-bottom: 0.25rem;
+    }
+    .history-item:hover { background: rgba(255,140,0,0.06); border-color: rgba(255,140,0,0.15); }
+    .history-item .h-icon {
+      width: 1.8rem; height: 1.8rem; border-radius: 0.4rem;
+      background: rgba(255,140,0,0.1); border: 1px solid rgba(255,140,0,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; flex-shrink: 0;
+    }
+    .history-item .h-info { flex: 1; min-width: 0; }
+    .history-item .h-url {
+      font-size: 0.72rem; font-weight: 500; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .history-item .h-meta { font-size: 0.58rem; color: var(--dim); margin-top: 0.1rem; }
+    .history-empty { text-align: center; padding: 1.2rem; font-size: 0.75rem; color: var(--dim); }
+
+    .btn-preview {
+      width: 100%;
+      display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+      border: 1px solid var(--border-light);
+      background: linear-gradient(180deg, #3a2510, #1a1008);
+      color: var(--primary); font-weight: 600; font-size: 0.82rem;
+      padding: 0.55rem 1rem; border-radius: 0.55rem;
+      cursor: pointer; -webkit-appearance: none;
+      margin-bottom: 0.9rem;
+    }
+    .btn-preview:hover { box-shadow: 0 0 18px var(--primary-glow); }
+
+    .preview-overlay {
+      position: fixed; inset: 0; z-index: 150;
+      background: #000; display: flex; flex-direction: column;
+    }
+    .preview-bar {
+      flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+      padding: 0.5rem 0.75rem; background: #111; border-bottom: 1px solid #333;
+      gap: 0.5rem;
+    }
+    .preview-bar span {
+      font-size: 0.72rem; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+    }
+    .preview-bar button {
+      border: 1px solid #444; background: #222; color: #fff;
+      font-size: 0.72rem; font-weight: 600; padding: 0.35rem 0.7rem;
+      border-radius: 0.35rem; cursor: pointer; -webkit-appearance: none; flex-shrink: 0;
+    }
+    .preview-frame {
+      flex: 1; width: 100%; border: 0; background: #fff;
+    }
+
+    .premium-cta { display: none !important; }
+
+    .official-channels {
+      display: flex; flex-direction: column; gap: 0.5rem;
+      margin-top: 0.75rem;
+      padding: 0.65rem;
+      background: rgba(255,140,0,0.04);
+      border-radius: 0.6rem;
+      border: 1px solid rgba(255,140,0,0.08);
+    }
+    .official-channels .label {
+      font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--dim);
+      text-align: center;
+    }
+    .official-channels .links {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;
+    }
+    .official-channels .links a {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-light);
+      background: rgba(15,10,5,0.7);
+      color: var(--muted);
+      font-size: 0.6rem;
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    .official-channels .links a:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .qr-modal .modal { max-width: 300px; text-align: center; }
+    .qr-modal .qr-img-wrap {
+      width: 100%; border-radius: 0.7rem; overflow: hidden;
+      border: 1px solid var(--border); background: #fff; margin: 0.6rem 0 0.75rem;
+    }
+    .qr-modal .qr-img-wrap img { width: 100%; height: auto; display: block; }
+    .qr-modal .qr-info {
+      font-size: 0.75rem; color: var(--muted); margin-bottom: 0.65rem; line-height: 1.45;
+    }
+    .qr-modal .qr-info strong { color: var(--primary); }
+    .btn-confirm-pay {
+      width: 100%; display: block;
+      border: 1px solid #25d366;
+      background: linear-gradient(180deg, #128c7e, #075e54);
+      color: #fff; font-weight: 700; font-size: 0.85rem;
+      padding: 0.7rem; border-radius: 0.55rem;
+      text-decoration: none; text-align: center;
+      cursor: pointer; -webkit-appearance: none; margin-bottom: 0.45rem;
+    }
+    .btn-close-qr {
+      width: 100%; border: 1px solid var(--border);
+      background: #1a0a05; color: var(--muted);
+      font-size: 0.78rem; font-weight: 500;
+      padding: 0.55rem; border-radius: 0.45rem;
+      cursor: pointer; -webkit-appearance: none;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.2rem 1rem calc(1.4rem + var(--safe-bottom));
+      background: rgba(6, 4, 2, 0.85); width: 100%;
+    }
+    .footer-inner { max-width: 720px; margin: 0 auto; }
+    .footer-inner h3 { font-size: 0.8rem; font-weight: 600; color: var(--primary); margin-bottom: 0.4rem; }
+    .footer-inner p { font-size: 0.72rem; color: var(--muted); line-height: 1.55; }
+    .made-by {
+      margin-top: 0.9rem; padding-top: 0.7rem; border-top: 1px solid var(--border);
+      font-size: 0.68rem; color: var(--dim); text-align: center;
+    }
+    .made-by strong { color: var(--primary); }
+
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
+      padding: 1rem; backdrop-filter: blur(4px);
+    }
+    .modal {
+      width: 100%; max-width: 340px; background: var(--panel);
+      border: 1px solid var(--border-light); border-radius: 0.9rem; padding: 1.1rem;
+      box-shadow: 0 0 40px rgba(255,140,0,0.12);
+    }
+    .modal h3 { font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-bottom: 0.3rem; text-align: center; }
+    .modal p { font-size: 0.72rem; color: var(--muted); text-align: center; margin-bottom: 0.85rem; }
+    .modal input {
+      width: 100%; border: 1px solid var(--border); background: rgba(8,5,3,0.8);
+      border-radius: 0.55rem; padding: 0.65rem 0.75rem; color: var(--text); font-size: 15px; outline: none; margin-bottom: 0.65rem;
+    }
+    .modal input:focus { border-color: var(--primary); }
+    .modal-actions { display: flex; gap: 0.45rem; }
+    .modal-actions button {
+      flex: 1; padding: 0.65rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.82rem;
+      cursor: pointer; -webkit-appearance: none; border: 1px solid var(--border);
+    }
+    .btn-cancel { background: #1a0a05; color: var(--muted); }
+    .btn-ok { background: linear-gradient(180deg, #5a3a1a, #2a1a0a); color: var(--primary); border-color: var(--border-light); }
+    .modal-msg { font-size: 0.72rem; text-align: center; margin-top: 0.5rem; min-height: 1.1em; }
+    .modal-msg.ok { color: #4ade80; }
+    .modal-msg.err { color: #fca5a5; }
+
+    .confetti-wrap { position: fixed; inset: 0; z-index: 200; pointer-events: none; overflow: hidden; }
+    .confetti { position: absolute; width: 7px; height: 7px; top: -10px; border-radius: 2px; animation: fall linear forwards; }
+    @keyframes fall { to { transform: translateY(105vh) rotate(720deg); opacity: 0; } }
+
+    .bot-status {
+      position: fixed; bottom: 0.6rem; right: 0.6rem; z-index: 40;
+      font-size: 0.58rem; color: var(--dim);
+      background: rgba(10,6,3,0.85); border: 1px solid var(--border);
+      padding: 0.25rem 0.5rem; border-radius: 999px;
+    }
+    .bot-status.on { color: #4ade80; border-color: rgba(74,222,128,0.3); }
+
+    @media (min-width: 640px) {
+      .hero h2 { font-size: 1.65rem; }
+      .form-row { flex-direction: row; align-items: stretch; }
+      .btn-gen { width: auto; min-width: 8rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== LOADING AWAL KEREN ===== -->
+  <div id="initial-loader">
+    <div class="loader-logo">⛓️ Source Getter</div>
+    <div class="loader-sub">— extracting the web —</div>
+    <div class="loader-bar-track">
+      <div class="loader-bar-fill" id="loaderFill"></div>
+    </div>
+    <div class="loader-pct" id="loaderPct">0%</div>
+    <div class="loader-dots">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div class="bg-overlay"></div>
+  <div class="app">
+    <header>
+      <div class="header-inner">
+        <div class="brand-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="brand">
+          <h1>Source Getter</h1>
+          <p>URL → full source extractor</p>
+        </div>
+        <div class="token-badge">⚡ <span id="token-count">0</span>/40</div>
+      </div>
+    </header>
+
+    <div class="top-hint">Gratis <strong>40 token/hari</strong> · reset setiap hari otomatis</div>
+
+    <main>
+      <div class="hero">
+        <div class="badge">HTML + CSS + JavaScript</div>
+        <h2>Paste a URL. Get all the code.</h2>
+        <p>Masukkan alamat website, ambil HTML, CSS, dan JavaScript.</p>
+      </div>
+
+      <div class="form-card" id="form-card">
+        <form id="form" class="form-row">
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input id="url-input" type="text" inputmode="url" placeholder="example.com atau https://..." autocomplete="off" spellcheck="false" />
+          </div>
+          <button type="submit" class="btn-gen" id="btn-gen">Generate</button>
+        </form>
+        <div id="error-box" class="error-box hidden"></div>
+        <div class="lock-notice hidden" id="lock-notice">Token hari ini habis. Coba lagi besok atau beli website unlimited.</div>
+      </div>
+
+      <div id="gen-loading" class="card hidden">
+        <div class="gen-terminal-bar">
+          <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+          <span style="margin-left:0.35rem">source-getter — extracting</span>
+        </div>
+        <div class="gen-body">
+          <div class="gen-target"><b>target ❯</b> <span id="gen-url"></span></div>
+          <div class="gen-status">
+            <div class="spinner"></div>
+            <div><h4>Mengambil source code…</h4><p>Menangkap setiap baris seperti di browser.</p></div>
+          </div>
+          <div class="progress-row"><span>Progress</span><span id="gen-pct">0%</span></div>
+          <div class="progress-track"><div class="progress-fill" id="gen-bar"></div></div>
+          <ul class="steps" id="gen-steps"></ul>
+        </div>
+      </div>
+
+      <div id="empty-state" class="card empty">
+        <p>Belum ada kode yang diekstrak</p>
+        <small>Tempel URL di atas lalu tekan Generate.</small>
+      </div>
+      <div id="err-state" class="card empty hidden">
+        <p>Tidak bisa mengambil URL tersebut. Coba link lain.</p>
+      </div>
+
+      <div id="stats-row" class="hidden" style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.9rem;"></div>
+
+      <div id="file-viewer" class="card hidden">
+        <div class="card-head">
+          <div style="display:flex;align-items:center;gap:0.4rem;min-width:0;flex:1">
+            <span class="tag" id="fv-tag">HTML</span>
+            <span style="font-size:0.72rem;font-family:ui-monospace,monospace;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="fv-name">index.html</span>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn-sm" id="btn-copy">Copy</button>
+            <button type="button" class="btn-sm" id="btn-download">Save</button>
+          </div>
+        </div>
+        <div class="file-meta" id="fv-meta"></div>
+        <div class="code-wrap" id="fv-code"></div>
+      </div>
+
+      <div id="files-card" class="card hidden">
+        <div class="card-head">
+          <h3>Files</h3>
+          <span class="meta" id="files-count">0 total</span>
+        </div>
+        <div class="file-list" id="files-list"></div>
+      </div>
+
+      <button type="button" class="btn-preview hidden" id="btn-preview">
+        👁 Preview website (fullscreen)
+      </button>
+
+      <div class="card history-section" id="history-card">
+        <div class="card-head">
+          <h3>History</h3>
+          <span class="meta" id="history-count">0</span>
+        </div>
+        <div class="history-list" id="history-list">
+          <div class="history-empty">Belum ada history extract</div>
+        </div>
+      </div>
+
+      <!-- Official Channel -->
+      <div class="official-channels">
+        <div class="label">Official Admin</div>
+        <div class="links">
+          <a href="https://whatsapp.com/channel/0029VbCeLM6IN9ijnLUmcO2R" target="_blank" rel="noopener">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            WhatsApp Channel
+          </a>
+          <a href="https://tiktok.com/@kenzstcuu" target="_blank" rel="noopener">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+            TikTok @kenzstcuu
+          </a>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <h3>Tentang Source Getter</h3>
+        <p>
+          <strong style="color:var(--primary)">Source Getter</strong> mengambil source code publik dari website (HTML, CSS, JS) seperti yang diterima browser. Tidak mengakses server-side / database privat.
+        </p>
+        <div class="made-by">made with <strong>KENZ</strong></div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Fullscreen Preview -->
+  <div id="preview-overlay" class="preview-overlay hidden">
+    <div class="preview-bar">
+      <span id="preview-title">Preview</span>
+      <button type="button" id="btn-close-preview">Tutup ✕</button>
+    </div>
+    <iframe id="preview-frame" class="preview-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="Preview"></iframe>
+  </div>
+
+  <!-- QR Payment Modal -->
+  <div id="qr-modal" class="modal-overlay qr-modal hidden">
+    <div class="modal">
+      <h3 id="qr-title">Scan QR untuk bayar</h3>
+      <div class="qr-info" id="qr-info">Total: <strong>Rp 5.000</strong></div>
+      <div class="qr-img-wrap">
+        <img src="https://c.termai.cc/i194/Luk.png" alt="QR Code pembayaran" loading="lazy" />
+      </div>
+      <a class="btn-confirm-pay" id="btn-confirm-pay" href="#" target="_blank" rel="noopener">sudah bayar konfirmasi yuk!</a>
+      <button type="button" class="btn-close-qr" id="btn-close-qr">Tutup</button>
+    </div>
+  </div>
+
+  <div id="confetti-wrap" class="confetti-wrap hidden"></div>
+
+  <script>
+    // ============================================================
+    // LOADING AWAL KEREN - progress 0% → 100%
+    // ============================================================
+    (function() {
+      const loader = document.getElementById('initial-loader');
+      const fill = document.getElementById('loaderFill');
+      const pct = document.getElementById('loaderPct');
+      let progress = 0;
+      const duration = 2200; // ms
+      const startTime = performance.now();
+
+      function tick(now) {
+        const elapsed = now - startTime;
+        progress = Math.min(100, (elapsed / duration) * 100);
+        fill.style.width = progress + '%';
+        pct.textContent = Math.round(progress) + '%';
+        if (progress < 100) {
+          requestAnimationFrame(tick);
+        } else {
+          // selesai, hide loader
+          setTimeout(() => {
+            loader.classList.add('hide');
+            setTimeout(() => {
+              loader.style.display = 'none';
+            }, 800);
+          }, 300);
+        }
+      }
+      requestAnimationFrame(tick);
+    })();
+
+    // ============================================================
+    // MAIN APP LOGIC
+    // ============================================================
+    (function () {
+      const SUPABASE_URL = "https://woiuualtsfiynfonaygm.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvaXV1YWx0c2ZpeW5mb25heWdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwOTIxMDMsImV4cCI6MjEwMDY2ODEwM30.LKWgixQSEAdxWjW-7oXNj27FAVS-_nJaKPVDLmWGBf4";
+      const FETCH_URL = SUPABASE_URL + "/functions/v1/fetch-source";
+      const MAX_LINES = 4000;
+      const STEPS = [
+        "Connecting to remote server",
+        "Downloading HTML source",
+        "Fetching linked stylesheets",
+        "Fetching external JavaScript",
+        "Extracting inline style blocks",
+        "Extracting inline script blocks",
+        "Verifying code integrity",
+        "Finalizing capture"
+      ];
+
+      const $ = id => document.getElementById(id);
+      const form = $("form"), urlInput = $("url-input"), btnGen = $("btn-gen"), errorBox = $("error-box");
+      const genLoading = $("gen-loading"), genUrl = $("gen-url"), genBar = $("gen-bar"), genPct = $("gen-pct"), genSteps = $("gen-steps");
+      const emptyState = $("empty-state"), fileViewer = $("file-viewer"), errState = $("err-state");
+      const filesCard = $("files-card"), filesList = $("files-list"), filesCount = $("files-count");
+      const statsRow = $("stats-row");
+      const fvTag = $("fv-tag"), fvName = $("fv-name"), fvMeta = $("fv-meta"), fvCode = $("fv-code");
+      const btnCopy = $("btn-copy"), btnDownload = $("btn-download");
+      const formCard = $("form-card"), lockNotice = $("lock-notice");
+      const tokenCountEl = $("token-count");
+      const confettiWrap = $("confetti-wrap");
+      const historyList = $("history-list"), historyCount = $("history-count");
+      const btnPreview = $("btn-preview");
+      const previewOverlay = $("preview-overlay");
+      const previewFrame = $("preview-frame");
+      const previewTitle = $("preview-title");
+      const btnClosePreview = $("btn-close-preview");
+      const qrModal = $("qr-modal"), qrTitle = $("qr-title"), qrInfo = $("qr-info");
+      const btnConfirmPay = $("btn-confirm-pay"), btnCloseQr = $("btn-close-qr");
+
+      let currentResult = null, activeFileId = null;
+      let previewBlobUrl = null;
+      let history = JSON.parse(localStorage.getItem("sg_history") || "[]");
+
+      const DAILY_FREE = 40;
+      function todayKey() {
+        const d = new Date();
+        return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+      }
+      function loadTokens() {
+        const key = todayKey();
+        const savedDay = localStorage.getItem("sg_free_day");
+        let left = parseInt(localStorage.getItem("sg_free_left") || "0", 10);
+        if (savedDay !== key) {
+          left = DAILY_FREE;
+          localStorage.setItem("sg_free_day", key);
+          localStorage.setItem("sg_free_left", String(left));
+        }
+        return left;
+      }
+      let tokens = loadTokens();
+
+      function saveTokens() {
+        localStorage.setItem("sg_free_left", String(tokens));
+        localStorage.setItem("sg_free_day", todayKey());
+        tokenCountEl.textContent = tokens;
+        updateLockState();
+      }
+      function saveHistory() {
+        localStorage.setItem("sg_history", JSON.stringify(history.slice(0, 30)));
+        renderHistory();
+      }
+      function updateLockState() {
+        const locked = tokens <= 0;
+        formCard.classList.toggle("locked", locked);
+        lockNotice.classList.toggle("hidden", !locked);
+        btnGen.disabled = locked;
+        urlInput.disabled = locked;
+      }
+      saveTokens();
+      renderHistory();
+
+      function openQrModal(opts) {
+        qrTitle.textContent = opts.title || "Scan QR untuk bayar";
+        qrInfo.innerHTML = opts.infoHtml || "";
+        btnConfirmPay.href = "https://wa.me/6285134750953?text=" + encodeURIComponent(opts.confirmMsg || "");
+        qrModal.classList.remove("hidden");
+      }
+      function closeQrModal() {
+        qrModal.classList.add("hidden");
+      }
+      btnCloseQr.addEventListener("click", closeQrModal);
+      qrModal.addEventListener("click", e => { if (e.target === qrModal) closeQrModal(); });
+
+      function showConfetti() {
+        if (!confettiWrap) return;
+        confettiWrap.classList.remove("hidden");
+        confettiWrap.innerHTML = "";
+        const colors = ["#ff8c00", "#ffcc66", "#22c55e", "#3b82f6", "#ef4444", "#eab308", "#a855f7"];
+        for (let i = 0; i < 70; i++) {
+          const el = document.createElement("div");
+          el.className = "confetti";
+          el.style.left = Math.random() * 100 + "%";
+          el.style.background = colors[Math.floor(Math.random() * colors.length)];
+          el.style.animationDuration = (1.4 + Math.random() * 2) + "s";
+          el.style.animationDelay = (Math.random() * 0.4) + "s";
+          el.style.width = (5 + Math.random() * 7) + "px";
+          el.style.height = el.style.width;
+          confettiWrap.appendChild(el);
+        }
+        setTimeout(() => { confettiWrap.classList.add("hidden"); confettiWrap.innerHTML = ""; }, 3800);
+      }
+
+      function renderHistory() {
+        historyCount.textContent = history.length;
+        if (!history.length) {
+          historyList.innerHTML = '<div class="history-empty">Belum ada history extract</div>';
+          return;
+        }
+        historyList.innerHTML = history.map(h => {
+          const t = new Date(h.time);
+          const timeStr = t.toLocaleDateString("id-ID", { day: "2-digit", month: "short" }) + " " +
+            t.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+          return `<div class="history-item">
+            <div class="h-icon">📄</div>
+            <div class="h-info">
+              <div class="h-url">${escapeHtml(h.url)}</div>
+              <div class="h-meta">${timeStr} · ${h.fileCount || 0} files · ${formatBytes(h.totalLength || 0)}</div>
+            </div>
+          </div>`;
+        }).join("");
+      }
+
+      function showError(msg) { errorBox.textContent = msg; errorBox.classList.remove("hidden"); }
+      function clearError() { errorBox.classList.add("hidden"); errorBox.textContent = ""; }
+      function formatBytes(n) {
+        if (n == null) return "—";
+        if (n < 1024) return n + " B";
+        if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+        return (n / (1024 * 1024)).toFixed(2) + " MB";
+      }
+      function tagClass(kind) {
+        if (kind === "html") return "tag-html";
+        if (kind === "css" || kind === "inline-css") return "tag-css";
+        return "tag-js";
+      }
+      function tagLabel(kind) {
+        return ({ html: "HTML", css: "CSS", js: "JS", "inline-css": "INLINE CSS", "inline-js": "INLINE JS" })[kind] || String(kind).toUpperCase();
+      }
+      function escapeHtml(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+      function escapeAttr(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+      }
+
+      let genTimer = null, stepTimer = null;
+      function startGenUI(url) {
+        genLoading.classList.remove("hidden");
+        emptyState.classList.add("hidden");
+        fileViewer.classList.add("hidden");
+        errState.classList.add("hidden");
+        filesCard.classList.add("hidden");
+        statsRow.classList.add("hidden");
+        genUrl.textContent = url;
+        genBar.style.width = "0%"; genPct.textContent = "0%";
+        genSteps.innerHTML = STEPS.map((label, i) =>
+          `<li class="${i === 0 ? "active" : "pending"}" data-i="${i}"><span class="step-ico">${i === 0 ? "…" : i + 1}</span><span>${label}</span></li>`
+        ).join("");
+        const start = performance.now(), duration = 8000;
+        function tick(now) {
+          const p = Math.min(0.92, (now - start) / duration);
+          genBar.style.width = Math.round(p * 100) + "%";
+          genPct.textContent = Math.round(p * 100) + "%";
+          if (p < 0.92) genTimer = requestAnimationFrame(tick);
+        }
+        genTimer = requestAnimationFrame(tick);
+        let step = 0;
+        stepTimer = setInterval(() => {
+          if (step >= STEPS.length - 1) return;
+          const prev = genSteps.querySelector(`[data-i="${step}"]`);
+          if (prev) { prev.className = "done"; prev.querySelector(".step-ico").textContent = "✓"; }
+          step++;
+          const cur = genSteps.querySelector(`[data-i="${step}"]`);
+          if (cur) { cur.className = "active"; cur.querySelector(".step-ico").textContent = "…"; }
+        }, 900);
+      }
+      function finishGenUI() {
+        if (genTimer) cancelAnimationFrame(genTimer);
+        if (stepTimer) clearInterval(stepTimer);
+        genBar.style.width = "100%"; genPct.textContent = "100%";
+        STEPS.forEach((_, i) => {
+          const el = genSteps.querySelector(`[data-i="${i}"]`);
+          if (el) { el.className = "done"; el.querySelector(".step-ico").textContent = "✓"; }
+        });
+      }
+
+      async function startFetch(raw) {
+        if (tokens <= 0) { showError("Token hari ini habis. Coba lagi besok."); return; }
+        let url = (raw || "").trim();
+        if (!url) return;
+        if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+        clearError();
+        btnGen.disabled = true; urlInput.disabled = true; btnGen.textContent = "Generating…";
+        startGenUI(url);
+        try {
+          const res = await fetch(FETCH_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + SUPABASE_KEY },
+            body: JSON.stringify({ url })
+          });
+          const data = await res.json();
+          finishGenUI();
+          if (!res.ok || data.error) {
+            showError((data && data.error) || ("Request failed (" + res.status + ")"));
+            genLoading.classList.add("hidden");
+            errState.classList.remove("hidden");
+            return;
+          }
+          tokens = Math.max(0, tokens - 1);
+          saveTokens();
+
+          currentResult = {
+            url: data.url,
+            files: data.files || [],
+            totalLength: data.totalLength || 0,
+            fileCount: data.fileCount || 0
+          };
+          activeFileId = currentResult.files[0] ? currentResult.files[0].id : null;
+
+          history.unshift({
+            url: data.url || url,
+            time: Date.now(),
+            fileCount: currentResult.fileCount,
+            totalLength: currentResult.totalLength
+          });
+          saveHistory();
+
+          setTimeout(() => {
+            genLoading.classList.add("hidden");
+            renderResult();
+          }, 300);
+        } catch (err) {
+          finishGenUI();
+          showError(err instanceof Error ? err.message : "Network error");
+          genLoading.classList.add("hidden");
+          errState.classList.remove("hidden");
+        } finally {
+          btnGen.disabled = tokens <= 0;
+          urlInput.disabled = tokens <= 0;
+          btnGen.textContent = "Generate";
+        }
+      }
+      form.addEventListener("submit", e => {
+        e.preventDefault();
+        if (!btnGen.disabled) startFetch(urlInput.value);
+      });
+
+      function openPreview() {
+        if (!currentResult) return;
+        const htmlFile = currentResult.files.find(f => f.kind === "html") || currentResult.files[0];
+        if (!htmlFile || !htmlFile.content) {
+          alert("Tidak ada HTML untuk di-preview");
+          return;
+        }
+        if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
+        const blob = new Blob([htmlFile.content], { type: "text/html;charset=utf-8" });
+        previewBlobUrl = URL.createObjectURL(blob);
+        previewFrame.src = previewBlobUrl;
+        previewTitle.textContent = currentResult.url || "Preview";
+        previewOverlay.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+      }
+      function closePreview() {
+        previewOverlay.classList.add("hidden");
+        previewFrame.src = "about:blank";
+        document.body.style.overflow = "";
+        if (previewBlobUrl) {
+          URL.revokeObjectURL(previewBlobUrl);
+          previewBlobUrl = null;
+        }
+      }
+      btnPreview.addEventListener("click", openPreview);
+      btnClosePreview.addEventListener("click", closePreview);
+
+      function renderResult() {
+        if (!currentResult) return;
+        const files = currentResult.files;
+        filesCard.classList.remove("hidden");
+        filesCount.textContent = files.length + " total";
+        btnPreview.classList.remove("hidden");
+        renderFileList(files);
+        const active = files.find(f => f.id === activeFileId) || files[0];
+        if (active) renderFileViewer(active);
+        renderStats();
+      }
+
+      function renderFileList(files) {
+        const order = ["html", "css", "inline-css", "js", "inline-js"];
+        const labels = { html: "HTML", css: "External CSS", "inline-css": "Inline CSS", js: "External JavaScript", "inline-js": "Inline JavaScript" };
+        let html = "";
+        order.forEach(kind => {
+          const items = files.filter(f => f.kind === kind);
+          if (!items.length) return;
+          html += `<div class="file-group-label">${labels[kind] || kind}</div>`;
+          items.forEach(f => {
+            const active = f.id === activeFileId ? " active" : "";
+            const lines = f.content ? f.content.split("\n").length : 0;
+            html += `<button type="button" class="file-item${active}" data-id="${f.id}">
+              <span class="tag ${tagClass(f.kind)}">${tagLabel(f.kind)}</span>
+              <span style="min-width:0;flex:1"><div class="name">${escapeHtml(f.name || f.kind)}</div>
+              <div class="sub">${f.error ? "failed" : lines.toLocaleString() + " lines · " + formatBytes(f.contentLength || (f.content ? f.content.length : 0))}</div></span></button>`;
+          });
+        });
+        filesList.innerHTML = html;
+      }
+      filesList.addEventListener("click", e => {
+        const btn = e.target.closest(".file-item");
+        if (!btn || !currentResult) return;
+        activeFileId = btn.getAttribute("data-id");
+        const f = currentResult.files.find(x => x.id === activeFileId);
+        if (f) { renderFileList(currentResult.files); renderFileViewer(f); }
+      });
+
+      function renderFileViewer(file) {
+        fileViewer.classList.remove("hidden");
+        emptyState.classList.add("hidden");
+        fvTag.className = "tag " + tagClass(file.kind);
+        fvTag.textContent = tagLabel(file.kind);
+        fvName.textContent = file.name || file.kind;
+        const lines = (file.content || "").split("\n");
+        const status = file.error ? "error" : (file.status == null ? "inline" : "HTTP " + file.status);
+        fvMeta.innerHTML = `<span>${status}</span><span>${lines.length.toLocaleString()} lines</span><span>${formatBytes(file.contentLength || (file.content ? file.content.length : 0))}</span>` +
+          (file.url ? `<a href="${escapeAttr(file.url)}" target="_blank" rel="noopener">${escapeHtml(file.url)}</a>` : "");
+        if (file.error) {
+          fvCode.innerHTML = `<div class="empty"><p>Couldn't fetch this file</p><small>${escapeHtml(file.error)}</small></div>`;
+          return;
+        }
+        const shown = lines.slice(0, MAX_LINES);
+        let rows = "";
+        for (let i = 0; i < shown.length; i++) {
+          rows += `<tr><td class="ln">${i + 1}</td><td class="lc">${escapeHtml(shown[i] === "" ? " " : shown[i])}</td></tr>`;
+        }
+        let extra = "";
+        if (lines.length > MAX_LINES) {
+          extra = `<div style="padding:0.6rem;border-top:1px solid var(--border);font-size:0.68rem;color:var(--dim);text-align:center">Showing first ${MAX_LINES.toLocaleString()} lines</div>`;
+        }
+        fvCode.innerHTML = `<table class="code-table"><tbody>${rows}</tbody></table>${extra}`;
+        btnCopy.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(file.content || "");
+            btnCopy.textContent = "Copied";
+            setTimeout(() => btnCopy.textContent = "Copy", 1400);
+          } catch (_) {}
+        };
+        btnDownload.onclick = () => {
+          const ext = file.kind === "html" ? "html" : (file.kind.indexOf("css") >= 0 ? "css" : "js");
+          const blob = new Blob([file.content || ""], { type: "text/plain;charset=utf-8" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = file.name || ("source." + ext);
+          a.click();
+          URL.revokeObjectURL(a.href);
+        };
+      }
+
+      function renderStats() {
+        if (!currentResult) return;
+        const f = currentResult.files;
+        const cssN = f.filter(x => x.kind === "css" || x.kind === "inline-css").length;
+        const jsN = f.filter(x => x.kind === "js" || x.kind === "inline-js").length;
+        statsRow.classList.remove("hidden");
+        statsRow.style.display = "grid";
+        statsRow.innerHTML =
+          `<div style="border:1px solid var(--border);background:var(--panel);border-radius:0.6rem;padding:0.55rem 0.65rem;"><label style="font-size:0.55rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--dim);">Files</label><strong style="display:block;margin-top:0.1rem;font-size:0.95rem;color:var(--primary);">${currentResult.fileCount}</strong></div>` +
+          `<div style="border:1px solid var(--border);background:var(--panel);border-radius:0.6rem;padding:0.55rem 0.65rem;"><label style="font-size:0.55rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--dim);">Total size</label><strong style="display:block;margin-top:0.1rem;font-size:0.95rem;color:var(--primary);">${formatBytes(currentResult.totalLength)}</strong></div>` +
+          `<div style="border:1px solid var(--border);background:var(--panel);border-radius:0.6rem;padding:0.55rem 0.65rem;"><label style="font-size:0.55rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--dim);">CSS</label><strong style="display:block;margin-top:0.1rem;font-size:0.95rem;color:var(--primary);">${cssN}</strong></div>` +
+          `<div style="border:1px solid var(--border);background:var(--panel);border-radius:0.6rem;padding:0.55rem 0.65rem;"><label style="font-size:0.55rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--dim);">JS</label><strong style="display:block;margin-top:0.1rem;font-size:0.95rem;color:var(--primary);">${jsN}</strong></div>`;
+      }
+    })();
+  </script>
+</body>
+</html>

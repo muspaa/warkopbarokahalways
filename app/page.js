@@ -8,6 +8,7 @@ export default function HomePage() {
   const [filter, setFilter] = useState("all");
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [showPreloader, setShowPreloader] = useState(true);
   const [optionModal, setOptionModal] = useState(null);
   const [selectedTemp, setSelectedTemp] = useState(null);
   const [selectedSugar, setSelectedSugar] = useState(null);
@@ -33,6 +34,14 @@ export default function HomePage() {
     const params = new URLSearchParams(window.location.search);
     const meja = params.get("meja");
     if (meja) setTableNumber(meja);
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setShowPreloader(false);
+      document.body.classList.add("loaded");
+    }, 2600);
+    return () => clearTimeout(t);
   }, []);
 
   const rupiah = (n) =>
@@ -144,6 +153,16 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0b0a08] text-[#f4ede2]">
+      {showPreloader && (
+        <div className="fixed inset-0 z-[9999] bg-[#0b0a08] flex flex-col items-center justify-center">
+          <h1 className="font-bold text-[clamp(1.3rem,4vw,2.2rem)] tracking-[0.35em] text-[#f4ede2] text-center">
+            WARKOP BAROCKAH
+            <br />
+            <span className="text-[#d4a24c]">ALWAYS</span>
+          </h1>
+        </div>
+      )}
+
       {/* HEADER */}
       <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-6 px-4 sm:px-8 py-4 bg-[#0b0a08]/90 backdrop-blur-md border-b border-[#d4a24c]/20">
         <a href="#top" className="text-[#d4a24c] font-bold text-lg tracking-wider">
@@ -152,6 +171,12 @@ export default function HomePage() {
         <nav className="hidden md:flex gap-6 ml-auto">
           <a href="#menu" className="text-sm text-[#9c948a] hover:text-[#f4ede2] transition-colors">
             Menu
+          </a>
+          <a href="#tentang" className="text-sm text-[#9c948a] hover:text-[#f4ede2] transition-colors">
+            Tentang
+          </a>
+          <a href="#kontak" className="text-sm text-[#9c948a] hover:text-[#f4ede2] transition-colors">
+            Kontak
           </a>
         </nav>
         <button
@@ -288,6 +313,74 @@ export default function HomePage() {
               ))}
             </div>
           )}
+        </section>
+
+        {/* TENTANG */}
+        <section
+          id="tentang"
+          className="px-4 sm:px-8 py-16 max-w-6xl mx-auto border-t border-[#d4a24c]/20"
+        >
+          <p className="text-xs tracking-[0.3em] text-[#d4a24c] uppercase mb-3">
+            Tentang Kami
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+            Lebih dari sekadar
+            <br />
+            <span className="text-[#d4a24c]">tempat ngopi.</span>
+          </h2>
+          <p className="text-[#9c948a] max-w-2xl leading-relaxed mb-8">
+            Warkop Barockah Always hadir sebagai ruang sederhana untuk menikmati kopi,
+            makanan, dan cerita. Dari nongkrong sebentar sampai ngobrol berjam-jam,
+            kami ingin setiap kunjungan terasa akrab.
+          </p>
+          <div className="grid grid-cols-3 gap-6 max-w-lg">
+            <div>
+              <p className="text-3xl font-bold text-[#d4a24c]">1999+</p>
+              <p className="text-xs text-[#9c948a]">Semangat melayani</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-[#d4a24c]">24/7</p>
+              <p className="text-xs text-[#9c948a]">Tempat bertemu</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-[#d4a24c]">100%</p>
+              <p className="text-xs text-[#9c948a]">Suasana santai</p>
+            </div>
+          </div>
+        </section>
+
+        {/* KONTAK */}
+        <section
+          id="kontak"
+          className="px-4 sm:px-8 py-16 max-w-6xl mx-auto border-t border-[#d4a24c]/20"
+        >
+          <p className="text-xs tracking-[0.3em] text-[#d4a24c] uppercase mb-3">
+            Mampir, Yuk
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+            Ngopi enak.
+            <br />
+            <span className="text-[#d4a24c]">Obrolan panjang.</span>
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-4 mt-8">
+            <div className="p-5 rounded-2xl border border-[#d4a24c]/20 bg-[#d4a24c]/5">
+              <p className="text-xs text-[#d4a24c] uppercase tracking-widest mb-1">
+                Alamat
+              </p>
+              <p className="font-bold mb-1">Warkop Barockah Always</p>
+              <p className="text-sm text-[#9c948a]">Jl. Kopi No. 99, Rasa Selalu Di Hati</p>
+            </div>
+            <div className="p-5 rounded-2xl border border-[#d4a24c]/20 bg-[#d4a24c]/5">
+              <p className="text-xs text-[#d4a24c] uppercase tracking-widest mb-1">
+                Jam Buka
+              </p>
+              <p className="font-bold mb-1">Setiap Hari · 24 Jam</p>
+              <p className="text-sm text-green-400 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                Buka Sekarang
+              </p>
+            </div>
+          </div>
         </section>
       </main>
 
@@ -459,7 +552,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* OPTION MODAL */}
+      {/* OPTION MODAL (untuk minuman) */}
       {optionModal && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <div className="bg-[#131110] border border-[#d4a24c]/30 rounded-2xl w-full max-w-md">
