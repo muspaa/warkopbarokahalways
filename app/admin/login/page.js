@@ -8,20 +8,51 @@ export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [debugInfo, setDebugInfo] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   async function handleLogin(e) {
     e.preventDefault();
     setError("");
+    setDebugInfo("");
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      setError("Email atau password salah.");
-      return;
+
+    try {
+      // Cek env
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      setDebugInfo(`URL: ${url ? url.substring(0, 30) + "..." : "❌ KOSONG"}\nKEY: ${key ? "✅ ADA" : "❌ KOSONG"}`);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
+
+      console.log("LOGIN DATA:", data);
+      console.log("LOGIN ERROR:", error);
+
+      setLoading(false);
+
+      if (error) {
+        setError(`❌ ${error.message}`);
+        setDebugInfo((prev) => prev + `\n\nError code: ${error.status || "?"}`);
+        return;
+      }
+
+      if (!data?.session) {
+        setError("⚠️ Login sukses tapi session kosong");
+        return;
+      }
+
+      setDebugInfo((prev) => prev + "\n\n✅ Login sukses, redirect...");
+      router.push("/admin");
+      router.refresh();
+    } catch (err) {
+      console.error("CATCH:", err);
+      setLoading(false);
+      setError(`💥 Error: ${err.message}`);
     }
-    router.push("/admin");
   }
 
   return (
@@ -52,9 +83,14 @@ export default function AdminLogin() {
             className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 outline-none focus:border-[#d4a24c] focus:ring-2 focus:ring-[#d4a24c]/30"
           />
           {error && (
-            <p className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+            <p className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 break-words">
               {error}
             </p>
+          )}
+          {debugInfo && (
+            <pre className="text-xs text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 whitespace-pre-wrap break-words font-mono">
+              {debugInfo}
+            </pre>
           )}
           <button
             type="submit"
