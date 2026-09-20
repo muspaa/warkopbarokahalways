@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 
 const MENU = [
@@ -16,16 +17,57 @@ const MENU = [
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [ready, setReady] = useState(false);
 
-  if (pathname === "/admin/login") return <>{children}</>;
+  useEffect(() => {
+    // Halaman login: langsung tampilkan
+    if (pathname === "/admin/login") {
+      setReady(true);
+      return;
+    }
+
+    // Halaman admin: cek session
+    let mounted = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      if (!data.session) {
+        window.location.href = "/admin/login";
+      } else {
+        setReady(true);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [pathname]);
+
+  // Kalau di halaman login, tampilkan tanpa sidebar
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
+  // Kalau belum ready, tampilkan loading
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#d4a24c] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-slate-400">Memuat...</p>
+        </div>
+      </div>
+    );
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push("/admin/login");
+    window.location.href = "/admin/login";
   }
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
+      {/* SIDEBAR DESKTOP */}
       <aside className="hidden lg:flex w-64 bg-slate-900 text-white flex-col fixed h-full">
         <div className="p-6 border-b border-slate-800">
           <div className="flex items-center gap-3">
@@ -38,6 +80,7 @@ export default function AdminLayout({ children }) {
             </div>
           </div>
         </div>
+
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {MENU.map((item) => {
             const active =
@@ -59,6 +102,7 @@ export default function AdminLayout({ children }) {
             );
           })}
         </nav>
+
         <div className="p-4 border-t border-slate-800">
           <button
             onClick={handleLogout}
@@ -69,13 +113,17 @@ export default function AdminLayout({ children }) {
         </div>
       </aside>
 
+      {/* MAIN CONTENT */}
       <div className="flex-1 lg:ml-64">
+        {/* Mobile Header */}
         <div className="lg:hidden sticky top-0 z-40 bg-slate-900 text-white px-4 py-3 flex items-center justify-between">
           <span className="font-bold">Barockah Admin</span>
           <button onClick={handleLogout} className="text-sm text-slate-400">
             Logout
           </button>
         </div>
+
+        {/* Mobile Nav */}
         <div className="lg:hidden sticky top-[52px] z-30 bg-slate-800 overflow-x-auto flex gap-1 p-2">
           {MENU.map((item) => {
             const active = pathname === item.href;
@@ -92,6 +140,7 @@ export default function AdminLayout({ children }) {
             );
           })}
         </div>
+
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
