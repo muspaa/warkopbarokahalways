@@ -373,7 +373,7 @@ export default function DapurPage() {
                     <p className="font-bold text-slate-800">
                       {detail.payment_method === "qris"
                         ? "QRIS"
-                        : "Cash (Bayar di Kasir)"}
+                        : "Cash"}
                     </p>
                   </div>
                 </div>
