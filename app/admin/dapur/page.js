@@ -189,7 +189,6 @@ export default function DapurPage() {
             const urgent = isUrgent(o.created_at);
             const items = itemsMap[o.id] || [];
             const isQris = o.payment_method === "qris";
-            const isPaid = o.payment_status === "paid";
 
             return (
               <div
@@ -227,7 +226,7 @@ export default function DapurPage() {
                   </div>
                 </div>
 
-                {/* Pembayaran */}
+                {/* METODE PEMBAYARAN — hanya metode, tanpa status */}
                 <div
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl mb-3 text-xs font-bold ${
                     isQris
@@ -237,21 +236,6 @@ export default function DapurPage() {
                 >
                   {isQris ? <IconQRIS /> : <IconCash />}
                   <span>{isQris ? "QRIS" : "CASH"}</span>
-                  {isQris && isPaid && (
-                    <span className="ml-auto text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full">
-                      LUNAS
-                    </span>
-                  )}
-                  {isQris && !isPaid && (
-                    <span className="ml-auto text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full">
-                      BELUM BAYAR
-                    </span>
-                  )}
-                  {!isQris && (
-                    <span className="ml-auto text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-full">
-                      DI KASIR
-                    </span>
-                  )}
                 </div>
 
                 {/* Items Preview */}
@@ -364,6 +348,7 @@ export default function DapurPage() {
                 </div>
               </div>
 
+              {/* METODE PEMBAYARAN — hanya metode */}
               <div
                 className={`rounded-xl p-4 ${
                   detail.payment_method === "qris"
@@ -387,16 +372,8 @@ export default function DapurPage() {
                     </p>
                     <p className="font-bold text-slate-800">
                       {detail.payment_method === "qris"
-                        ? "QRIS (E-Wallet / M-Banking)"
+                        ? "QRIS"
                         : "Cash (Bayar di Kasir)"}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Status:{" "}
-                      <span className="font-semibold">
-                        {detail.payment_status === "paid"
-                          ? "Sudah dibayar"
-                          : "Belum dibayar"}
-                      </span>
                     </p>
                   </div>
                 </div>
