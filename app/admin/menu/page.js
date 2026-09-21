@@ -12,6 +12,8 @@ const EMPTY = {
   rating: 4.7,
   is_favorite: false,
   is_available: true,
+  has_variants: false,
+  variants: [],
 };
 
 /* ========== ICON ========== */
@@ -59,6 +61,11 @@ const IconFood = () => (
     <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
   </svg>
 );
+const IconSparkle = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+    <path d="M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2z" />
+  </svg>
+);
 
 export default function MenuPage() {
   const [menus, setMenus] = useState([]);
@@ -68,6 +75,7 @@ export default function MenuPage() {
   const [editId, setEditId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [variantInput, setVariantInput] = useState("");
 
   useEffect(() => {
     load();
@@ -85,6 +93,7 @@ export default function MenuPage() {
   function openAdd() {
     setForm(EMPTY);
     setEditId(null);
+    setVariantInput("");
     setShowForm(true);
   }
 
@@ -98,8 +107,11 @@ export default function MenuPage() {
       rating: m.rating || 4.7,
       is_favorite: m.is_favorite || false,
       is_available: m.is_available,
+      has_variants: m.has_variants || false,
+      variants: Array.isArray(m.variants) ? m.variants : [],
     });
     setEditId(m.id);
+    setVariantInput("");
     setShowForm(true);
   }
 
@@ -107,11 +119,15 @@ export default function MenuPage() {
     e.preventDefault();
     if (!form.name.trim()) return alert("Nama wajib diisi");
     if (!form.price) return alert("Harga wajib diisi");
+    if (form.has_variants && form.variants.length === 0) {
+      return alert("Tambahkan minimal 1 varian rasa, atau matikan opsi varian");
+    }
     setSaving(true);
     const payload = {
       ...form,
       price: parseInt(form.price) || 0,
       rating: parseFloat(form.rating) || 4.7,
+      variants: form.has_variants ? form.variants : [],
     };
     let err;
     if (editId) {
@@ -142,6 +158,21 @@ export default function MenuPage() {
       .update({ is_available: !m.is_available })
       .eq("id", m.id);
     load();
+  }
+
+  function addVariant() {
+    const v = variantInput.trim();
+    if (!v) return;
+    if (form.variants.includes(v)) {
+      alert("Varian sudah ada");
+      return;
+    }
+    setForm({ ...form, variants: [...form.variants, v] });
+    setVariantInput("");
+  }
+
+  function removeVariant(v) {
+    setForm({ ...form, variants: form.variants.filter((x) => x !== v) });
   }
 
   const rp = (n) =>
@@ -209,66 +240,93 @@ export default function MenuPage() {
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((m) => (
-            <div
-              key={m.id}
-              className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg hover:border-slate-300 transition-all flex flex-col"
-            >
-              <div className="relative aspect-video bg-slate-100">
-                {m.image_url ? (
-                  <img src={m.image_url} alt={m.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-300">
-                    <IconImage />
-                  </div>
-                )}
-                <span
-                  className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider text-white ${
-                    m.is_available ? "bg-green-500" : "bg-red-500"
-                  }`}
-                >
-                  {m.is_available ? "Tersedia" : "Habis"}
-                </span>
-                <span className="absolute bottom-2 left-2 bg-white/95 backdrop-blur text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider text-slate-700">
-                  {catLabel(m.category)}
-                </span>
-              </div>
-
-              <div className="p-4 flex-1 flex flex-col">
-                <h3 className="font-bold text-slate-800 truncate">{m.name}</h3>
-                <p className="text-xs text-slate-500 line-clamp-2 mt-1 h-8">
-                  {m.description || "Tanpa deskripsi"}
-                </p>
-                <p className="text-lg font-bold text-[#e05c3a] mt-2">{rp(m.price)}</p>
-
-                <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
-                  <button
-                    onClick={() => openEdit(m)}
-                    className="flex-1 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold hover:bg-slate-200 transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <IconEdit /> Edit
-                  </button>
-                  <button
-                    onClick={() => toggleAvailable(m)}
-                    className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                      m.is_available
-                        ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                        : "bg-green-100 text-green-700 hover:bg-green-200"
+          {filtered.map((m) => {
+            const variants = Array.isArray(m.variants) ? m.variants : [];
+            return (
+              <div
+                key={m.id}
+                className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg hover:border-slate-300 transition-all flex flex-col"
+              >
+                <div className="relative aspect-video bg-slate-100">
+                  {m.image_url ? (
+                    <img src={m.image_url} alt={m.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                      <IconImage />
+                    </div>
+                  )}
+                  <span
+                    className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider text-white ${
+                      m.is_available ? "bg-green-500" : "bg-red-500"
                     }`}
                   >
-                    {m.is_available ? "Habis" : "Ready"}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(m.id)}
-                    className="w-10 h-9 rounded-xl bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center"
-                    aria-label="Hapus"
-                  >
-                    <IconTrash />
-                  </button>
+                    {m.is_available ? "Tersedia" : "Habis"}
+                  </span>
+                  <span className="absolute bottom-2 left-2 bg-white/95 backdrop-blur text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider text-slate-700">
+                    {catLabel(m.category)}
+                  </span>
+                  {m.has_variants && variants.length > 0 && (
+                    <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-gradient-to-br from-purple-500 to-pink-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                      <IconSparkle /> {variants.length} Varian
+                    </span>
+                  )}
+                </div>
+
+                <div className="p-4 flex-1 flex flex-col">
+                  <h3 className="font-bold text-slate-800 truncate">{m.name}</h3>
+                  <p className="text-xs text-slate-500 line-clamp-2 mt-1 h-8">
+                    {m.description || "Tanpa deskripsi"}
+                  </p>
+
+                  {m.has_variants && variants.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {variants.slice(0, 4).map((v) => (
+                        <span
+                          key={v}
+                          className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-semibold"
+                        >
+                          {v}
+                        </span>
+                      ))}
+                      {variants.length > 4 && (
+                        <span className="text-[10px] bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full font-semibold">
+                          +{variants.length - 4}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <p className="text-lg font-bold text-[#e05c3a] mt-2">{rp(m.price)}</p>
+
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+                    <button
+                      onClick={() => openEdit(m)}
+                      className="flex-1 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold hover:bg-slate-200 transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <IconEdit /> Edit
+                    </button>
+                    <button
+                      onClick={() => toggleAvailable(m)}
+                      className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                        m.is_available
+                          ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                          : "bg-green-100 text-green-700 hover:bg-green-200"
+                      }`}
+                    >
+                      {m.is_available ? "Habis" : "Ready"}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(m.id)}
+                      className="w-10 h-9 rounded-xl bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center"
+                      aria-label="Hapus"
+                    >
+                      <IconTrash />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -376,6 +434,86 @@ export default function MenuPage() {
                 />
                 Tandai sebagai Favorit
               </label>
+
+              {/* ============ VARIAN RASA ============ */}
+              <div className="border-t border-slate-200 pt-4 space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-3">
+                  <input
+                    type="checkbox"
+                    checked={form.has_variants}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        has_variants: e.target.checked,
+                        variants: e.target.checked ? form.variants : [],
+                      })
+                    }
+                    className="w-5 h-5 rounded accent-purple-600"
+                  />
+                  <div className="flex-1">
+                    <p className="font-bold text-sm text-purple-800 flex items-center gap-1.5">
+                      <IconSparkle /> Menu ini punya varian rasa
+                    </p>
+                    <p className="text-xs text-purple-600">
+                      Contoh: Pop Ice (Alpukat, Coklat, Mangga, dll)
+                    </p>
+                  </div>
+                </label>
+
+                {form.has_variants && (
+                  <div className="space-y-3 pl-2">
+                    <Field label="Tambah Varian Rasa">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={variantInput}
+                          onChange={(e) => setVariantInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addVariant();
+                            }
+                          }}
+                          placeholder="Contoh: Alpukat"
+                          className="input-field flex-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={addVariant}
+                          className="px-4 py-2 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700 transition-colors"
+                        >
+                          Tambah
+                        </button>
+                      </div>
+                    </Field>
+
+                    {form.variants.length > 0 && (
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                          Daftar Varian ({form.variants.length})
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {form.variants.map((v) => (
+                            <span
+                              key={v}
+                              className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 border border-purple-200 px-3 py-1 rounded-full text-xs font-semibold"
+                            >
+                              {v}
+                              <button
+                                type="button"
+                                onClick={() => removeVariant(v)}
+                                className="text-purple-600 hover:text-purple-900"
+                              >
+                                <IconClose />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="sticky bottom-0 bg-white p-5 border-t border-slate-100 flex gap-2">
