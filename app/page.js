@@ -12,13 +12,13 @@ const IconCart = () => (
   </svg>
 );
 const IconCoffee = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
     <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
     <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
   </svg>
 );
 const IconFood = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
     <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
     <path d="M7 2v20" />
     <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
@@ -56,6 +56,14 @@ const IconArrowRight = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
     <line x1="5" y1="12" x2="19" y2="12" />
     <polyline points="12 5 19 12 12 19" />
+  </svg>
+);
+const IconNote = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
   </svg>
 );
 
@@ -116,6 +124,7 @@ export default function HomePage() {
   const [selectedTemp, setSelectedTemp] = useState(null);
   const [selectedSugar, setSelectedSugar] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
+  const [itemNote, setItemNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [customerName, setCustomerName] = useState("");
@@ -179,51 +188,84 @@ export default function HomePage() {
     });
   }
 
+  // ========== LOGIKA MODAL ==========
+  // "variant"  → minuman yang punya varian rasa → pilih rasa
+  // "normal"   → minuman tanpa varian → suhu & gula
+  // "food"     → MAKANAN → catatan
+  // "none"     → SNACK → langsung masuk keranjang
   function getMenuModalType(item) {
     const variants = Array.isArray(item.variants) ? item.variants : [];
     const hasVariant = item.has_variants && variants.length > 0;
-    const isMinuman = item.category === "minuman";
+
     if (hasVariant) return "variant";
-    if (isMinuman) return "normal";
-    return "none";
+    if (item.category === "minuman") return "normal";
+    if (item.category === "makanan") return "food"; // ← MAKANAN → modal catatan
+    return "none"; // ← SNACK → langsung
   }
 
   function handleAdd(item) {
     const type = getMenuModalType(item);
+
     if (type === "variant") {
       setOptionModal({ ...item, modalType: "variant" });
       setSelectedVariant(null);
       setSelectedTemp(null);
       setSelectedSugar(null);
+      setItemNote("");
     } else if (type === "normal") {
       setOptionModal({ ...item, modalType: "normal" });
       setSelectedTemp(null);
       setSelectedSugar(null);
       setSelectedVariant(null);
+      setItemNote("");
+    } else if (type === "food") {
+      // MAKANAN → modal catatan
+      setOptionModal({ ...item, modalType: "food" });
+      setItemNote("");
     } else {
+      // SNACK → langsung masuk keranjang
       addToCart(item);
     }
   }
 
   function confirmOption() {
+    // Minuman dengan varian → pilih rasa
     if (optionModal.modalType === "variant") {
       if (!selectedVariant) {
         alert("Pilih rasa dulu");
         return;
       }
-      addToCart(optionModal, { variant: selectedVariant });
+      addToCart(optionModal, {
+        variant: selectedVariant,
+        note: itemNote.trim() || null,
+      });
       setOptionModal(null);
       return;
     }
-    if (!selectedTemp || !selectedSugar) {
-      alert("Pilih suhu dan gula dulu");
+
+    // Minuman biasa → suhu & gula
+    if (optionModal.modalType === "normal") {
+      if (!selectedTemp || !selectedSugar) {
+        alert("Pilih suhu dan gula dulu");
+        return;
+      }
+      addToCart(optionModal, {
+        temp: selectedTemp,
+        sugar: selectedSugar,
+        note: itemNote.trim() || null,
+      });
+      setOptionModal(null);
       return;
     }
-    addToCart(optionModal, {
-      temp: selectedTemp,
-      sugar: selectedSugar,
-    });
-    setOptionModal(null);
+
+    // Makanan → catatan saja
+    if (optionModal.modalType === "food") {
+      addToCart(optionModal, {
+        note: itemNote.trim() || null,
+      });
+      setOptionModal(null);
+      return;
+    }
   }
 
   const totalQty = cart.reduce((s, x) => s + x.qty, 0);
@@ -235,6 +277,7 @@ export default function HomePage() {
     if (v.variant) parts.push(v.variant);
     if (v.temp) parts.push(v.temp);
     if (v.sugar) parts.push(`Gula ${v.sugar}`);
+    if (v.note) parts.push(`"${v.note}"`);
     return parts.join(" · ");
   }
 
@@ -263,17 +306,20 @@ export default function HomePage() {
         .single();
       if (e1) throw e1;
 
-      const items = cart.map((x) => ({
-        order_id: order.id,
-        menu_item_id: x.id,
-        menu_name: x.variant?.variant
-          ? `${x.name} (${x.variant.variant})`
-          : x.name,
-        price: x.price,
-        quantity: x.qty,
-        variant_temp: x.variant?.temp || null,
-        variant_sugar: x.variant?.sugar || null,
-      }));
+      const items = cart.map((x) => {
+        let menuName = x.name;
+        if (x.variant?.variant) menuName += ` (${x.variant.variant})`;
+        if (x.variant?.note) menuName += ` — ${x.variant.note}`;
+        return {
+          order_id: order.id,
+          menu_item_id: x.id,
+          menu_name: menuName,
+          price: x.price,
+          quantity: x.qty,
+          variant_temp: x.variant?.temp || null,
+          variant_sugar: x.variant?.sugar || null,
+        };
+      });
       const { error: e2 } = await supabase.from("order_items").insert(items);
       if (e2) throw e2;
 
@@ -307,7 +353,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0b0a08] text-[#f4ede2]">
-      {/* FONT OSWALD DARI GOOGLE */}
       <link
         href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap"
         rel="stylesheet"
@@ -365,7 +410,6 @@ export default function HomePage() {
           animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        /* FONT HEADER */
         .font-oswald {
           font-family: 'Oswald', sans-serif;
           font-weight: 700;
@@ -722,7 +766,7 @@ export default function HomePage() {
             <div className="p-5 border-b border-white/20 flex justify-between items-start">
               <div className="flex items-start gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-white/10 text-white flex items-center justify-center shrink-0">
-                  <IconCoffee />
+                  {optionModal.modalType === "food" ? <IconFood /> : <IconCoffee />}
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-bold text-lg truncate">{optionModal.name}</h3>
@@ -738,29 +782,67 @@ export default function HomePage() {
             </div>
 
             <div className="p-5 space-y-5">
-              {optionModal.modalType === "variant" && optionVariants.length > 0 && (
+              {/* MODAL CATATAN — untuk MAKANAN */}
+              {optionModal.modalType === "food" && (
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-white font-bold mb-3">
-                    Pilih Rasa
+                  <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-white font-bold mb-3">
+                    <IconNote />
+                    Catatan Pesanan
+                  </label>
+                  <textarea
+                    value={itemNote}
+                    onChange={(e) => setItemNote(e.target.value)}
+                    placeholder="Contoh: Pedas, tanpa sayur, extra kerupuk..."
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all resize-none"
+                  />
+                  <p className="text-[10px] text-[#9c948a] mt-2">
+                    Kosongkan kalau tidak ada catatan khusus
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {optionVariants.map((v) => (
-                      <button
-                        key={v}
-                        onClick={() => setSelectedVariant(v)}
-                        className={`px-4 py-2.5 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
-                          selectedVariant === v
-                            ? "bg-white text-black border-white"
-                            : "border-white/30 text-[#9c948a] hover:text-white hover:border-white"
-                        }`}
-                      >
-                        {v}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               )}
 
+              {/* MODAL VARIAN — untuk minuman dengan rasa */}
+              {optionModal.modalType === "variant" && optionVariants.length > 0 && (
+                <>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-white font-bold mb-3">
+                      Pilih Rasa
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {optionVariants.map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => setSelectedVariant(v)}
+                          className={`px-4 py-2.5 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
+                            selectedVariant === v
+                              ? "bg-white text-black border-white"
+                              : "border-white/30 text-[#9c948a] hover:text-white hover:border-white"
+                          }`}
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-white font-bold mb-3">
+                      <IconNote />
+                      Catatan (opsional)
+                    </label>
+                    <textarea
+                      value={itemNote}
+                      onChange={(e) => setItemNote(e.target.value)}
+                      placeholder="Contoh: Es sedikit"
+                      rows={2}
+                      className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all resize-none"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* MODAL NORMAL — suhu & gula untuk minuman biasa */}
               {optionModal.modalType === "normal" && (
                 <>
                   <div>
@@ -803,6 +885,20 @@ export default function HomePage() {
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-white font-bold mb-3">
+                      <IconNote />
+                      Catatan (opsional)
+                    </label>
+                    <textarea
+                      value={itemNote}
+                      onChange={(e) => setItemNote(e.target.value)}
+                      placeholder="Contoh: Es sedikit"
+                      rows={2}
+                      className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all resize-none"
+                    />
                   </div>
                 </>
               )}
