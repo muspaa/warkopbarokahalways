@@ -53,16 +53,22 @@ const IconTable = () => (
     <line x1="9" y1="21" x2="9" y2="9" />
   </svg>
 );
-const IconArrowRight = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-    <line x1="5" y1="12" x2="19" y2="12" />
-    <polyline points="12 5 19 12 12 19" />
+const IconHistory = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 const IconBell = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+);
+const IconArrowRight = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
   </svg>
 );
 
@@ -74,7 +80,6 @@ export default function AdminOverview() {
     rejected: 0,
     revenue: 0,
   });
-  const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -96,8 +101,7 @@ export default function AdminOverview() {
     const { data: orders } = await supabase
       .from("orders")
       .select("*")
-      .gte("created_at", today.toISOString())
-      .order("created_at", { ascending: false });
+      .gte("created_at", today.toISOString());
 
     if (orders) {
       setStats({
@@ -109,7 +113,6 @@ export default function AdminOverview() {
           .filter((o) => o.status === "diterima")
           .reduce((s, o) => s + o.total, 0),
       });
-      setRecentOrders(orders.slice(0, 5));
     }
     setLoading(false);
   }
@@ -121,29 +124,23 @@ export default function AdminOverview() {
       maximumFractionDigits: 0,
     }).format(n);
 
-  function timeAgo(d) {
-    const diff = Math.floor((Date.now() - new Date(d)) / 1000);
-    if (diff < 60) return `${diff} detik lalu`;
-    if (diff < 3600) return `${Math.floor(diff / 60)} menit lalu`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
-    return `${Math.floor(diff / 86400)} hari lalu`;
-  }
-
   const cards = [
     { label: "Pesanan Hari Ini", value: stats.todayOrders, Icon: IconInbox, color: "from-blue-500 to-cyan-500" },
     { label: "Menunggu", value: stats.pending, Icon: IconBell, color: "from-amber-500 to-orange-500" },
     { label: "Diterima", value: stats.accepted, Icon: IconCheck, color: "from-green-500 to-emerald-500" },
-    { label: "Pendapatan", value: rp(stats.revenue), Icon: IconWallet, color: "from-fuchsia-500 to-pink-500" },
+    { label: "Pendapatan", value: rp(stats.revenue), Icon: IconWallet, color: "from-slate-700 to-slate-900" },
   ];
 
   const quickActions = [
     { href: "/admin/dapur", label: "Layar Dapur", Icon: IconKitchen },
     { href: "/admin/menu", label: "Kelola Menu", Icon: IconMenu },
     { href: "/admin/meja", label: "Meja & QR", Icon: IconTable },
+    { href: "/admin/riwayat", label: "Riwayat", Icon: IconHistory },
   ];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Overview</h1>
@@ -183,7 +180,7 @@ export default function AdminOverview() {
         ))}
       </div>
 
-      {/* Alert Pending */}
+      {/* Alert Pesanan Menunggu */}
       {stats.pending > 0 && (
         <Link
           href="/admin/dapur"
@@ -208,12 +205,12 @@ export default function AdminOverview() {
         </Link>
       )}
 
-      {/* Quick Actions */}
+      {/* Aksi Cepat */}
       <div>
         <h2 className="font-bold text-slate-800 mb-3 text-sm uppercase tracking-wider">
           Aksi Cepat
         </h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {quickActions.map(({ href, label, Icon }) => (
             <Link
               key={href}
@@ -229,83 +226,24 @@ export default function AdminOverview() {
         </div>
       </div>
 
-      {/* Recent Orders */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-100">
-          <h2 className="font-bold text-slate-800">Pesanan Terbaru</h2>
-          <Link
-            href="/admin/riwayat"
-            className="text-sm text-slate-600 font-semibold hover:text-slate-900 flex items-center gap-1"
-          >
-            Riwayat <IconArrowRight />
-          </Link>
-        </div>
-
-        {loading ? (
-          <div className="p-5 space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse" />
-            ))}
-          </div>
-        ) : recentOrders.length === 0 ? (
-          <div className="p-10 text-center">
-            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-400">
-              <IconInbox />
-            </div>
-            <p className="text-slate-500 text-sm">Belum ada pesanan hari ini</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100">
-            {recentOrders.map((o) => (
-              <Link
-                key={o.id}
-                href="/admin/dapur"
-                className="p-4 sm:p-5 flex items-center gap-4 hover:bg-slate-50 transition-colors"
-              >
-                <div className="w-11 h-11 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shrink-0">
-                  {o.table_number || "?"}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-800 truncate text-sm sm:text-base">
-                    {o.customer_name}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Meja {o.table_number || "-"} · {timeAgo(o.created_at)}
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="font-bold text-slate-800 text-sm sm:text-base">
-                    {rp(o.total)}
-                  </p>
-                  <StatusBadge status={o.status} />
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+      {/* Info Box */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 className="font-bold text-slate-800 mb-3">Informasi</h2>
+        <ul className="text-sm text-slate-600 space-y-2">
+          <li className="flex items-start gap-2">
+            <span className="text-slate-400 mt-0.5">•</span>
+            <span>Semua pesanan baru masuk ke <strong>Layar Dapur</strong></span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-slate-400 mt-0.5">•</span>
+            <span>Terima atau tolak pesanan dari layar dapur</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-slate-400 mt-0.5">•</span>
+            <span>Riwayat pesanan bisa dilihat di menu <strong>Riwayat</strong></span>
+          </li>
+        </ul>
       </div>
     </div>
-  );
-}
-
-function StatusBadge({ status }) {
-  const map = {
-    pending: "bg-amber-100 text-amber-700 border-amber-200",
-    diterima: "bg-green-100 text-green-700 border-green-200",
-    ditolak: "bg-red-100 text-red-700 border-red-200",
-  };
-  const label = {
-    pending: "Menunggu",
-    diterima: "Diterima",
-    ditolak: "Ditolak",
-  };
-  return (
-    <span
-      className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border mt-1 uppercase tracking-wider ${
-        map[status] || "bg-slate-100 text-slate-600 border-slate-200"
-      }`}
-    >
-      {label[status] || status}
-    </span>
   );
   }
