@@ -66,6 +66,24 @@ const IconNote = () => (
     <line x1="16" y1="17" x2="8" y2="17" />
   </svg>
 );
+const IconCash = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8">
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <circle cx="12" cy="12" r="2" />
+    <path d="M6 12h.01M18 12h.01" />
+  </svg>
+);
+const IconQRIS = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8">
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <line x1="14" y1="14" x2="14" y2="21" />
+    <line x1="18" y1="14" x2="18" y2="18" />
+    <line x1="21" y1="14" x2="21" y2="21" />
+    <line x1="14" y1="21" x2="21" y2="21" />
+  </svg>
+);
 
 /* ========== REVEAL ON SCROLL ========== */
 function useRevealOnScroll() {
@@ -127,11 +145,15 @@ export default function HomePage() {
   const [itemNote, setItemNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState(null);
   const [customerName, setCustomerName] = useState("");
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [successOrder, setSuccessOrder] = useState(null);
   const [toast, setToast] = useState(null);
+
+  const QRIS_IMAGE = "https://cdn.zass.in/mFanmrDx6h.jpg";
 
   useEffect(() => {
     (async () => {
@@ -188,24 +210,17 @@ export default function HomePage() {
     });
   }
 
-  // ========== LOGIKA MODAL ==========
-  // "variant"  → minuman yang punya varian rasa → pilih rasa
-  // "normal"   → minuman tanpa varian → suhu & gula
-  // "food"     → MAKANAN → catatan
-  // "none"     → SNACK → langsung masuk keranjang
   function getMenuModalType(item) {
     const variants = Array.isArray(item.variants) ? item.variants : [];
     const hasVariant = item.has_variants && variants.length > 0;
-
     if (hasVariant) return "variant";
     if (item.category === "minuman") return "normal";
-    if (item.category === "makanan") return "food"; // ← MAKANAN → modal catatan
-    return "none"; // ← SNACK → langsung
+    if (item.category === "makanan") return "food";
+    return "none";
   }
 
   function handleAdd(item) {
     const type = getMenuModalType(item);
-
     if (type === "variant") {
       setOptionModal({ ...item, modalType: "variant" });
       setSelectedVariant(null);
@@ -219,17 +234,14 @@ export default function HomePage() {
       setSelectedVariant(null);
       setItemNote("");
     } else if (type === "food") {
-      // MAKANAN → modal catatan
       setOptionModal({ ...item, modalType: "food" });
       setItemNote("");
     } else {
-      // SNACK → langsung masuk keranjang
       addToCart(item);
     }
   }
 
   function confirmOption() {
-    // Minuman dengan varian → pilih rasa
     if (optionModal.modalType === "variant") {
       if (!selectedVariant) {
         alert("Pilih rasa dulu");
@@ -242,8 +254,6 @@ export default function HomePage() {
       setOptionModal(null);
       return;
     }
-
-    // Minuman biasa → suhu & gula
     if (optionModal.modalType === "normal") {
       if (!selectedTemp || !selectedSugar) {
         alert("Pilih suhu dan gula dulu");
@@ -257,8 +267,6 @@ export default function HomePage() {
       setOptionModal(null);
       return;
     }
-
-    // Makanan → catatan saja
     if (optionModal.modalType === "food") {
       addToCart(optionModal, {
         note: itemNote.trim() || null,
@@ -281,7 +289,8 @@ export default function HomePage() {
     return parts.join(" · ");
   }
 
-  async function submitOrder() {
+  // Step 1: Konfirmasi pesanan → lanjut ke pembayaran
+  function goToPayment() {
     if (!customerName.trim()) return alert("Nama harus diisi");
     if (!tableNumber.trim()) {
       return alert(
@@ -290,8 +299,21 @@ export default function HomePage() {
     }
     if (cart.length === 0) return alert("Keranjang kosong");
 
+    setShowCheckout(false);
+    setShowPayment(true);
+    setPaymentMethod(null);
+  }
+
+  // Step 2: Pilih metode pembayaran → kirim pesanan
+  async function confirmPayment() {
+    if (!paymentMethod) {
+      alert("Pilih metode pembayaran dulu");
+      return;
+    }
+
     setSubmitting(true);
     try {
+      // Simpan order ke Supabase
       const { data: order, error: e1 } = await supabase
         .from("orders")
         .insert({
@@ -301,6 +323,8 @@ export default function HomePage() {
           total: totalPrice,
           status: "pending",
           is_read: false,
+          payment_method: paymentMethod,
+          payment_status: "pending",
         })
         .select()
         .single();
@@ -323,11 +347,15 @@ export default function HomePage() {
       const { error: e2 } = await supabase.from("order_items").insert(items);
       if (e2) throw e2;
 
-      setSuccessOrder(order);
+      setSuccessOrder({
+        ...order,
+        payment_method: paymentMethod,
+      });
       setCart([]);
       setNotes("");
       setCustomerName("");
-      setShowCheckout(false);
+      setShowPayment(false);
+      setPaymentMethod(null);
     } catch (err) {
       alert("Gagal: " + err.message);
     } finally {
@@ -648,7 +676,7 @@ export default function HomePage() {
       </aside>
 
       {/* OVERLAY */}
-      {(cartOpen || showCheckout || optionModal || successOrder) && (
+      {(cartOpen || showCheckout || showPayment || optionModal || successOrder) && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150]"
           onClick={() => {
@@ -658,7 +686,7 @@ export default function HomePage() {
         />
       )}
 
-      {/* CHECKOUT MODAL */}
+      {/* CHECKOUT MODAL — Konfirmasi Pesanan */}
       {showCheckout && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <div className="menu-card-enter bg-[#131110] border border-white/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -741,17 +769,153 @@ export default function HomePage() {
                 Batal
               </button>
               <button
-                onClick={submitOrder}
-                disabled={submitting || !tableNumber}
+                onClick={goToPayment}
+                className="flex-1 bg-white text-black font-bold py-3 rounded-full hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                Lanjut ke Pembayaran <IconArrowRight />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PAYMENT MODAL — Pilih Cash / QRIS */}
+      {showPayment && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+          <div className="menu-card-enter bg-[#131110] border border-white/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-5 border-b border-white/20 flex justify-between items-start">
+              <div>
+                <h3 className="font-bold text-lg">Pilih Pembayaran</h3>
+                <p className="text-white font-bold text-sm mt-0.5">
+                  Total: {rupiah(totalPrice)}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowPayment(false);
+                  setShowCheckout(true);
+                }}
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-[#9c948a] hover:text-white hover:rotate-90 hover:scale-110 transition-all flex items-center justify-center"
+              >
+                <IconClose />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-3">
+              {/* Pilihan Cash */}
+              <button
+                onClick={() => setPaymentMethod("cash")}
+                className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all active:scale-[0.98] ${
+                  paymentMethod === "cash"
+                    ? "border-white bg-white/10"
+                    : "border-white/20 hover:border-white/50"
+                }`}
+              >
+                <div
+                  className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
+                    paymentMethod === "cash"
+                      ? "bg-white text-black"
+                      : "bg-white/5 text-white"
+                  }`}
+                >
+                  <IconCash />
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <p className="font-bold text-white text-base">Bayar Cash</p>
+                  <p className="text-xs text-[#9c948a]">
+                    Bayar langsung ke kasir
+                  </p>
+                </div>
+                {paymentMethod === "cash" && (
+                  <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center shrink-0">
+                    <IconCheck />
+                  </div>
+                )}
+              </button>
+
+              {/* Pilihan QRIS */}
+              <button
+                onClick={() => setPaymentMethod("qris")}
+                className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all active:scale-[0.98] ${
+                  paymentMethod === "qris"
+                    ? "border-white bg-white/10"
+                    : "border-white/20 hover:border-white/50"
+                }`}
+              >
+                <div
+                  className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
+                    paymentMethod === "qris"
+                      ? "bg-white text-black"
+                      : "bg-white/5 text-white"
+                  }`}
+                >
+                  <IconQRIS />
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <p className="font-bold text-white text-base">QRIS</p>
+                  <p className="text-xs text-[#9c948a]">
+                    Scan QR code dengan e-wallet / m-banking
+                  </p>
+                </div>
+                {paymentMethod === "qris" && (
+                  <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center shrink-0">
+                    <IconCheck />
+                  </div>
+                )}
+              </button>
+
+              {/* Info tambahan berdasarkan pilihan */}
+              {paymentMethod === "cash" && (
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-sm text-blue-200">
+                  <p className="font-bold mb-1">💰 Bayar Cash</p>
+                  <p className="text-xs leading-relaxed">
+                    Silakan bayar ke kasir. Pesanan akan diproses setelah
+                    pembayaran diterima.
+                  </p>
+                </div>
+              )}
+
+              {paymentMethod === "qris" && (
+                <div className="bg-white/5 border border-white/30 rounded-xl p-4 space-y-3">
+                  <p className="font-bold text-white text-sm text-center">
+                    📱 Scan QRIS di bawah
+                  </p>
+                  <div className="bg-white rounded-xl p-3 max-w-xs mx-auto">
+                    <img
+                      src={QRIS_IMAGE}
+                      alt="QRIS"
+                      className="w-full h-auto rounded-lg"
+                    />
+                  </div>
+                  <p className="text-[11px] text-[#9c948a] text-center">
+                    Scan dengan aplikasi e-wallet atau m-banking
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-5 border-t border-white/20 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowPayment(false);
+                  setShowCheckout(true);
+                }}
+                className="px-5 py-3 rounded-full border border-white/30 text-[#9c948a] font-semibold hover:text-white hover:border-white hover:scale-105 active:scale-95 transition-all"
+              >
+                Kembali
+              </button>
+              <button
+                onClick={confirmPayment}
+                disabled={!paymentMethod || submitting}
                 className="flex-1 bg-white text-black font-bold py-3 rounded-full disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                    Mengirim...
+                    Memproses...
                   </>
                 ) : (
-                  <>Kirim Pesanan</>
+                  <>Konfirmasi Pesanan</>
                 )}
               </button>
             </div>
@@ -782,7 +946,6 @@ export default function HomePage() {
             </div>
 
             <div className="p-5 space-y-5">
-              {/* MODAL CATATAN — untuk MAKANAN */}
               {optionModal.modalType === "food" && (
                 <div>
                   <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-white font-bold mb-3">
@@ -802,7 +965,6 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* MODAL VARIAN — untuk minuman dengan rasa */}
               {optionModal.modalType === "variant" && optionVariants.length > 0 && (
                 <>
                   <div>
@@ -842,7 +1004,6 @@ export default function HomePage() {
                 </>
               )}
 
-              {/* MODAL NORMAL — suhu & gula untuk minuman biasa */}
               {optionModal.modalType === "normal" && (
                 <>
                   <div>
@@ -933,16 +1094,47 @@ export default function HomePage() {
             <p className="text-[#9c948a] mb-4 text-sm">
               Pesananmu sedang diproses dapur.
             </p>
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/30 rounded-full px-4 py-2 mb-6">
-              <IconMapPin />
-              <span className="text-white font-bold text-sm">
-                Meja {successOrder.table_number}
-              </span>
-              <span className="text-white/50">·</span>
-              <span className="text-white font-bold text-sm">
-                {rupiah(successOrder.total)}
-              </span>
+
+            <div className="space-y-2 mb-6">
+              <div className="inline-flex items-center gap-2 bg-white/10 border border-white/30 rounded-full px-4 py-2">
+                <IconMapPin />
+                <span className="text-white font-bold text-sm">
+                  Meja {successOrder.table_number}
+                </span>
+                <span className="text-white/50">·</span>
+                <span className="text-white font-bold text-sm">
+                  {rupiah(successOrder.total)}
+                </span>
+              </div>
+
+              <div className="block">
+                <span
+                  className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full ${
+                    successOrder.payment_method === "qris"
+                      ? "bg-purple-500/20 text-purple-200 border border-purple-500/30"
+                      : "bg-green-500/20 text-green-200 border border-green-500/30"
+                  }`}
+                >
+                  {successOrder.payment_method === "qris" ? (
+                    <>📱 Pembayaran QRIS</>
+                  ) : (
+                    <>💰 Pembayaran Cash</>
+                  )}
+                </span>
+              </div>
+
+              {successOrder.payment_method === "cash" && (
+                <p className="text-xs text-[#9c948a] pt-2">
+                  Silakan bayar ke kasir
+                </p>
+              )}
+              {successOrder.payment_method === "qris" && (
+                <p className="text-xs text-[#9c948a] pt-2">
+                  Terima kasih, pembayaran akan diverifikasi kasir
+                </p>
+              )}
             </div>
+
             <button
               onClick={() => setSuccessOrder(null)}
               className="w-full bg-white text-black font-bold py-3 rounded-full hover:scale-[1.02] active:scale-[0.98] transition-all"
