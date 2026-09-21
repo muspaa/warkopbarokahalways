@@ -64,11 +64,6 @@ const IconArrowDown = () => (
     <polyline points="19 12 12 19 5 12" />
   </svg>
 );
-const IconStar = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-2.5 h-2.5">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-);
 
 /* ========== REVEAL ON SCROLL ========== */
 function useRevealOnScroll() {
@@ -190,20 +185,17 @@ export default function HomePage() {
     });
   }
 
-  // Tentukan tipe modal berdasarkan data menu
   function getMenuModalType(item) {
     const variants = Array.isArray(item.variants) ? item.variants : [];
     const hasVariant = item.has_variants && variants.length > 0;
     const isMinuman = item.category === "minuman";
-
-    if (hasVariant) return "variant"; // hanya pilih rasa
-    if (isMinuman) return "normal"; // suhu & gula
-    return "none"; // langsung
+    if (hasVariant) return "variant";
+    if (isMinuman) return "normal";
+    return "none";
   }
 
   function handleAdd(item) {
     const type = getMenuModalType(item);
-
     if (type === "variant") {
       setOptionModal({ ...item, modalType: "variant" });
       setSelectedVariant(null);
@@ -229,8 +221,6 @@ export default function HomePage() {
       setOptionModal(null);
       return;
     }
-
-    // normal: suhu & gula
     if (!selectedTemp || !selectedSugar) {
       alert("Pilih suhu dan gula dulu");
       return;
@@ -369,10 +359,10 @@ export default function HomePage() {
 
         @keyframes pulseGlow {
           0%, 100% {
-            box-shadow: 0 8px 24px -8px rgba(224, 92, 58, 0.5);
+            box-shadow: 0 8px 24px -8px rgba(255, 255, 255, 0.4);
           }
           50% {
-            box-shadow: 0 12px 32px -6px rgba(224, 92, 58, 0.85);
+            box-shadow: 0 12px 32px -6px rgba(255, 255, 255, 0.7);
           }
         }
         .btn-pulse {
@@ -389,13 +379,11 @@ export default function HomePage() {
       `}</style>
 
       {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-4 px-4 sm:px-8 py-3 bg-[#0b0a08]/90 backdrop-blur-md border-b border-[#e05c3a]/20">
-        <a href="#top" className="flex items-center gap-3 shrink-0 hover:scale-[1.02] transition-transform">
-          <img
-            src="https://cdn.zass.in/3JXTmgsKRM.png"
-            alt="Logo Barokah"
-            className="h-12 sm:h-14 w-auto object-contain drop-shadow-[0_0_12px_rgba(224,92,58,0.45)]"
-          />
+      <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-4 px-4 sm:px-8 py-3 bg-[#0b0a08]/90 backdrop-blur-md border-b border-white/20">
+        <a href="#top" className="flex items-center shrink-0">
+          <h1 className="text-lg sm:text-xl font-bold text-white tracking-wider leading-tight">
+            WARKOP BAROKAH ALWAYS
+          </h1>
         </a>
 
         {tableNumber && (
@@ -407,12 +395,12 @@ export default function HomePage() {
 
         <button
           onClick={() => setCartOpen(true)}
-          className="relative ml-auto flex items-center gap-2 px-4 py-2 rounded-full bg-[#e05c3a]/10 border border-[#e05c3a]/40 text-[#f07a4a] font-bold text-sm hover:bg-[#e05c3a]/20 hover:scale-105 active:scale-95 transition-all"
+          className="relative ml-auto flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/40 text-white font-bold text-sm hover:bg-white/20 hover:scale-105 active:scale-95 transition-all"
         >
           <IconCart />
           <span className="hidden sm:inline">Keranjang</span>
           {totalQty > 0 && (
-            <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 rounded-full bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white text-xs font-extrabold flex items-center justify-center">
+            <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 rounded-full bg-white text-black text-xs font-extrabold flex items-center justify-center">
               {totalQty}
             </span>
           )}
@@ -430,13 +418,9 @@ export default function HomePage() {
           />
 
           <Reveal className="relative z-10">
-            <h1 className="text-3xl sm:text-5xl font-bold text-[#f4ede2] leading-tight mb-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]">
-              WARKOP <span className="text-[#f07a4a]">BAROKAH ALWAYS</span>
-            </h1>
-
             <a
               href="#menu"
-              className="inline-flex items-center gap-1.5 bg-[#1a1714] hover:bg-[#241f1a] text-[#f4ede2] font-semibold text-xs tracking-wide px-4 py-2.5 rounded-full hover:-translate-y-0.5 active:scale-95 transition-all"
+              className="inline-flex items-center gap-1.5 bg-[#1a1714] hover:bg-[#241f1a] text-white font-semibold text-xs tracking-wide px-4 py-2.5 rounded-full hover:-translate-y-0.5 active:scale-95 transition-all"
             >
               Menu
               <IconArrowDown />
@@ -447,13 +431,13 @@ export default function HomePage() {
         {/* MENU */}
         <section id="menu" className="px-3 sm:px-8 py-10 max-w-6xl mx-auto">
           <Reveal className="mb-6">
-            <div className="flex flex-col gap-4 pb-4 border-b border-[#e05c3a]/20 relative">
+            <div className="flex flex-col gap-4 pb-4 border-b border-white/20 relative">
               <div>
-                <p className="text-[10px] tracking-[0.3em] text-[#f07a4a] uppercase mb-1 font-bold">
+                <p className="text-[10px] tracking-[0.3em] text-white uppercase mb-1 font-bold">
                   MENU MAKANAN
                 </p>
-                <h2 className="text-2xl sm:text-3xl font-bold text-[#f4ede2]">
-                  BAROKAH <span className="text-[#f07a4a]">ALWAYS</span>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white">
+                  BAROKAH ALWAYS
                 </h2>
               </div>
 
@@ -464,8 +448,8 @@ export default function HomePage() {
                     onClick={() => setFilter(k)}
                     className={`btn-shine flex-1 sm:flex-initial inline-flex items-center justify-center px-3 sm:px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all hover:scale-105 active:scale-95 ${
                       filter === k
-                        ? "bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white shadow-lg shadow-[#e05c3a]/30"
-                        : "bg-[#1a1714] text-[#9c948a] hover:text-[#f4ede2] hover:bg-[#241f1a]"
+                        ? "bg-white text-black shadow-lg shadow-white/30"
+                        : "bg-[#1a1714] text-[#9c948a] hover:text-white hover:bg-[#241f1a]"
                     }`}
                   >
                     {l}
@@ -479,99 +463,68 @@ export default function HomePage() {
             <p className="text-center py-16 text-[#9c948a]">Menu tidak ditemukan</p>
           ) : (
             <div key={filter} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {filteredMenus.map((m, idx) => {
-                const variants = Array.isArray(m.variants) ? m.variants : [];
-                const showVariantsOnCard = m.has_variants && variants.length > 0;
-                return (
-                  <Reveal key={m.id} delay={idx * 0.05}>
-                    <article className="menu-card-enter group bg-gradient-to-b from-[#e05c3a]/5 to-[#131110] border border-[#e05c3a]/20 rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:border-[#e05c3a]/50 hover:shadow-2xl hover:shadow-[#e05c3a]/20 transition-all duration-300 flex flex-col h-full">
-                      <div className="relative aspect-[4/3] overflow-hidden bg-[#1a1714]">
-                        {m.image_url ? (
-                          <img
-                            src={m.image_url}
-                            alt={m.name}
-                            loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[#9c948a]">
-                            <IconFood />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#131110] via-transparent to-transparent pointer-events-none" />
-
-                        {m.is_favorite && (
-                          <span className="absolute top-2 right-2 bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white text-[9px] font-extrabold px-2 py-1 rounded-md tracking-wider uppercase">
-                            Favorit
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="p-3 sm:p-4 flex flex-col flex-1 -mt-6 relative z-10">
-                        <div className="flex items-center gap-1.5 text-[10px] text-[#9c948a] mb-1">
-                          <div className="flex text-[#d4a24c] gap-0.5">
-                            {Array(5).fill(0).map((_, i) => <IconStar key={i} />)}
-                          </div>
-                          <span>{Number(m.rating || 4.7).toFixed(1)}</span>
+              {filteredMenus.map((m, idx) => (
+                <Reveal key={m.id} delay={idx * 0.05}>
+                  <article className="menu-card-enter group bg-gradient-to-b from-white/5 to-[#131110] border border-white/20 rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:border-white/50 hover:shadow-2xl hover:shadow-white/20 transition-all duration-300 flex flex-col h-full">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-[#1a1714]">
+                      {m.image_url ? (
+                        <img
+                          src={m.image_url}
+                          alt={m.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[#9c948a]">
+                          <IconFood />
                         </div>
-                        <h3 className="text-sm sm:text-base font-bold mb-1 group-hover:text-[#f07a4a] transition-colors line-clamp-1">
-                          {m.name}
-                        </h3>
-                        <p className="text-[11px] sm:text-xs text-[#9c948a] line-clamp-2 flex-1 mb-3">
-                          {m.description}
-                        </p>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#131110] via-transparent to-transparent pointer-events-none" />
 
-                        {showVariantsOnCard && (
-                          <div className="mb-3 flex flex-wrap gap-1">
-                            {variants.slice(0, 3).map((v) => (
-                              <span
-                                key={v}
-                                className="text-[9px] bg-[#e05c3a]/15 text-[#f07a4a] border border-[#e05c3a]/30 px-1.5 py-0.5 rounded-full font-semibold"
-                              >
-                                {v}
-                              </span>
-                            ))}
-                            {variants.length > 3 && (
-                              <span className="text-[9px] bg-[#e05c3a]/15 text-[#f07a4a] border border-[#e05c3a]/30 px-1.5 py-0.5 rounded-full font-semibold">
-                                +{variants.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                      {m.is_favorite && (
+                        <span className="absolute top-2 right-2 bg-white text-black text-[9px] font-extrabold px-2 py-1 rounded-md tracking-wider uppercase">
+                          Favorit
+                        </span>
+                      )}
+                    </div>
 
-                        <div className="flex items-center justify-between pt-2.5 border-t border-[#e05c3a]/15">
-                          <div>
-                            <p className="text-[8px] text-[#9c948a] uppercase tracking-wider font-bold">
-                              Harga
-                            </p>
-                            <p className="text-[#f07a4a] font-bold text-sm sm:text-base">
-                              {rupiah(m.price)}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleAdd(m)}
-                            className="w-9 h-9 rounded-full bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white flex items-center justify-center shadow-lg shadow-[#e05c3a]/40 hover:rotate-90 hover:scale-110 active:scale-95 transition-all duration-300"
-                            aria-label={`Tambah ${m.name}`}
-                          >
-                            <IconPlus />
-                          </button>
+                    <div className="p-3 sm:p-4 flex flex-col flex-1 -mt-6 relative z-10">
+                      <h3 className="text-sm sm:text-base font-bold mb-3 group-hover:text-white transition-colors line-clamp-2 min-h-[2.5rem]">
+                        {m.name}
+                      </h3>
+
+                      <div className="flex items-center justify-between pt-2.5 border-t border-white/15 mt-auto">
+                        <div>
+                          <p className="text-[8px] text-[#9c948a] uppercase tracking-wider font-bold">
+                            Harga
+                          </p>
+                          <p className="text-white font-bold text-sm sm:text-base">
+                            {rupiah(m.price)}
+                          </p>
                         </div>
+                        <button
+                          onClick={() => handleAdd(m)}
+                          className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-lg shadow-white/40 hover:rotate-90 hover:scale-110 active:scale-95 transition-all duration-300"
+                          aria-label={`Tambah ${m.name}`}
+                        >
+                          <IconPlus />
+                        </button>
                       </div>
-                    </article>
-                  </Reveal>
-                );
-              })}
+                    </div>
+                  </article>
+                </Reveal>
+              ))}
             </div>
           )}
         </section>
       </main>
 
-      <footer className="px-4 sm:px-8 py-8 border-t border-[#e05c3a]/20 text-center text-sm text-[#9c948a]">
+      <footer className="px-4 sm:px-8 py-8 border-t border-white/20 text-center text-sm text-[#9c948a]">
         © {new Date().getFullYear()} Warkop Barokah Always
       </footer>
 
       {toast && (
-        <div className="toast-anim fixed bottom-6 left-1/2 -translate-x-1/2 bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white font-semibold text-sm px-5 py-3 rounded-full shadow-2xl shadow-[#e05c3a]/50 z-[400] flex items-center gap-2">
+        <div className="toast-anim fixed bottom-6 left-1/2 -translate-x-1/2 bg-white text-black font-semibold text-sm px-5 py-3 rounded-full shadow-2xl shadow-white/50 z-[400] flex items-center gap-2">
           <IconCheck />
           {toast}
         </div>
@@ -579,17 +532,17 @@ export default function HomePage() {
 
       {/* CART DRAWER */}
       <aside
-        className={`fixed top-0 right-0 h-full w-[min(400px,92vw)] bg-[#131110] border-l border-[#e05c3a]/20 z-[200] flex flex-col transition-transform duration-500 ${
+        className={`fixed top-0 right-0 h-full w-[min(400px,92vw)] bg-[#131110] border-l border-white/20 z-[200] flex flex-col transition-transform duration-500 ${
           cartOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between p-5 border-b border-[#e05c3a]/20">
+        <div className="flex items-center justify-between p-5 border-b border-white/20">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <IconCart /> Pesananmu
           </h3>
           <button
             onClick={() => setCartOpen(false)}
-            className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 text-[#9c948a] hover:text-[#f07a4a] hover:rotate-90 hover:scale-110 transition-all flex items-center justify-center"
+            className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 text-[#9c948a] hover:text-white hover:rotate-90 hover:scale-110 transition-all flex items-center justify-center"
           >
             <IconClose />
           </button>
@@ -611,7 +564,7 @@ export default function HomePage() {
             cart.map((x, idx) => (
               <div
                 key={idx}
-                className="menu-card-enter grid grid-cols-[56px_1fr_auto] gap-3 items-center pb-3 border-b border-[#e05c3a]/20"
+                className="menu-card-enter grid grid-cols-[56px_1fr_auto] gap-3 items-center pb-3 border-b border-white/20"
                 style={{ animationDelay: `${idx * 0.05}s` }}
               >
                 <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#1a1714] shrink-0">
@@ -627,7 +580,7 @@ export default function HomePage() {
                   <p className="font-semibold text-sm truncate">{x.name}</p>
                   <p className="text-xs text-[#9c948a]">{rupiah(x.price)}</p>
                   {x.variant && (
-                    <p className="text-[11px] text-[#f07a4a] italic mt-0.5">
+                    <p className="text-[11px] text-white italic mt-0.5">
                       {variantLabel(x.variant)}
                     </p>
                   )}
@@ -635,14 +588,14 @@ export default function HomePage() {
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => changeQty(idx, -1)}
-                    className="w-7 h-7 rounded-full border border-[#e05c3a]/30 text-[#f07a4a] hover:bg-[#e05c3a] hover:text-white hover:scale-110 active:scale-90 transition-all flex items-center justify-center"
+                    className="w-7 h-7 rounded-full border border-white/30 text-white hover:bg-white hover:text-black hover:scale-110 active:scale-90 transition-all flex items-center justify-center"
                   >
                     <IconMinus />
                   </button>
                   <span className="font-bold w-5 text-center text-sm">{x.qty}</span>
                   <button
                     onClick={() => changeQty(idx, 1)}
-                    className="w-7 h-7 rounded-full border border-[#e05c3a]/30 text-[#f07a4a] hover:bg-[#e05c3a] hover:text-white hover:scale-110 active:scale-90 transition-all flex items-center justify-center"
+                    className="w-7 h-7 rounded-full border border-white/30 text-white hover:bg-white hover:text-black hover:scale-110 active:scale-90 transition-all flex items-center justify-center"
                   >
                     <IconPlus />
                   </button>
@@ -652,10 +605,10 @@ export default function HomePage() {
           )}
         </div>
 
-        <div className="p-5 border-t border-[#e05c3a]/20">
+        <div className="p-5 border-t border-white/20">
           <div className="flex justify-between items-center mb-4">
             <span className="text-[#9c948a] text-sm">Total</span>
-            <strong className="text-2xl text-[#f07a4a]">{rupiah(totalPrice)}</strong>
+            <strong className="text-2xl text-white">{rupiah(totalPrice)}</strong>
           </div>
           <button
             onClick={() => {
@@ -664,7 +617,7 @@ export default function HomePage() {
               setShowCheckout(true);
             }}
             disabled={cart.length === 0}
-            className="btn-pulse w-full bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="btn-pulse w-full bg-white text-black font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             Pesan Sekarang <IconArrowRight />
           </button>
@@ -685,11 +638,11 @@ export default function HomePage() {
       {/* CHECKOUT MODAL */}
       {showCheckout && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="menu-card-enter bg-[#131110] border border-[#e05c3a]/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="p-5 border-b border-[#e05c3a]/20 flex justify-between items-start">
+          <div className="menu-card-enter bg-[#131110] border border-white/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-5 border-b border-white/20 flex justify-between items-start">
               <div>
                 <h3 className="font-bold text-lg">Konfirmasi Pesanan</h3>
-                <p className="text-[#f07a4a] font-bold text-sm mt-0.5">{rupiah(totalPrice)}</p>
+                <p className="text-white font-bold text-sm mt-0.5">{rupiah(totalPrice)}</p>
               </div>
               <button
                 onClick={() => setShowCheckout(false)}
@@ -731,7 +684,7 @@ export default function HomePage() {
               )}
 
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-2">
+                <label className="block text-[10px] uppercase tracking-widest text-white font-bold mb-2">
                   Nama Kamu *
                 </label>
                 <input
@@ -739,12 +692,12 @@ export default function HomePage() {
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Contoh: Budi"
-                  className="w-full px-4 py-3 rounded-xl border border-[#e05c3a]/30 bg-transparent text-[#f4ede2] placeholder-[#9c948a] outline-none focus:border-[#f07a4a] focus:ring-2 focus:ring-[#e05c3a]/20 transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-2">
+                <label className="block text-[10px] uppercase tracking-widest text-white font-bold mb-2">
                   Catatan (opsional)
                 </label>
                 <textarea
@@ -752,26 +705,26 @@ export default function HomePage() {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Contoh: jangan pakai pedas"
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border border-[#e05c3a]/30 bg-transparent text-[#f4ede2] placeholder-[#9c948a] outline-none focus:border-[#f07a4a] focus:ring-2 focus:ring-[#e05c3a]/20 transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all resize-none"
                 />
               </div>
             </div>
 
-            <div className="p-5 border-t border-[#e05c3a]/20 flex gap-3">
+            <div className="p-5 border-t border-white/20 flex gap-3">
               <button
                 onClick={() => setShowCheckout(false)}
-                className="px-5 py-3 rounded-full border border-[#e05c3a]/30 text-[#9c948a] font-semibold hover:text-[#f4ede2] hover:border-[#f07a4a] hover:scale-105 active:scale-95 transition-all"
+                className="px-5 py-3 rounded-full border border-white/30 text-[#9c948a] font-semibold hover:text-white hover:border-white hover:scale-105 active:scale-95 transition-all"
               >
                 Batal
               </button>
               <button
                 onClick={submitOrder}
                 disabled={submitting || !tableNumber}
-                className="flex-1 bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="flex-1 bg-white text-black font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                     Mengirim...
                   </>
                 ) : (
@@ -783,18 +736,18 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* OPTION MODAL — beda per tipe */}
+      {/* OPTION MODAL */}
       {optionModal && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="menu-card-enter bg-[#131110] border border-[#e05c3a]/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="p-5 border-b border-[#e05c3a]/20 flex justify-between items-start">
+          <div className="menu-card-enter bg-[#131110] border border-white/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-5 border-b border-white/20 flex justify-between items-start">
               <div className="flex items-start gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-lg bg-[#e05c3a]/10 text-[#f07a4a] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-white/10 text-white flex items-center justify-center shrink-0">
                   <IconCoffee />
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-bold text-lg truncate">{optionModal.name}</h3>
-                  <p className="text-[#f07a4a] font-bold text-sm">{rupiah(optionModal.price)}</p>
+                  <p className="text-white font-bold text-sm">{rupiah(optionModal.price)}</p>
                 </div>
               </div>
               <button
@@ -806,10 +759,9 @@ export default function HomePage() {
             </div>
 
             <div className="p-5 space-y-5">
-              {/* TIPE VARIANT: hanya pilih rasa */}
               {optionModal.modalType === "variant" && optionVariants.length > 0 && (
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-3">
+                  <p className="text-[10px] uppercase tracking-widest text-white font-bold mb-3">
                     Pilih Rasa
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -819,8 +771,8 @@ export default function HomePage() {
                         onClick={() => setSelectedVariant(v)}
                         className={`px-4 py-2.5 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
                           selectedVariant === v
-                            ? "bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white border-[#f07a4a] shadow-lg shadow-[#e05c3a]/30"
-                            : "border-[#e05c3a]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#f07a4a]"
+                            ? "bg-white text-black border-white shadow-lg shadow-white/30"
+                            : "border-white/30 text-[#9c948a] hover:text-white hover:border-white"
                         }`}
                       >
                         {v}
@@ -830,11 +782,10 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* TIPE NORMAL: suhu & gula */}
               {optionModal.modalType === "normal" && (
                 <>
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-3">
+                    <p className="text-[10px] uppercase tracking-widest text-white font-bold mb-3">
                       Pilih Suhu
                     </p>
                     <div className="flex gap-2">
@@ -844,8 +795,8 @@ export default function HomePage() {
                           onClick={() => setSelectedTemp(t)}
                           className={`flex-1 py-3 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
                             selectedTemp === t
-                              ? "bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white border-[#f07a4a] shadow-lg shadow-[#e05c3a]/30"
-                              : "border-[#e05c3a]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#f07a4a]"
+                              ? "bg-white text-black border-white shadow-lg shadow-white/30"
+                              : "border-white/30 text-[#9c948a] hover:text-white hover:border-white"
                           }`}
                         >
                           {t}
@@ -855,7 +806,7 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-3">
+                    <p className="text-[10px] uppercase tracking-widest text-white font-bold mb-3">
                       Pilih Gula
                     </p>
                     <div className="flex gap-2">
@@ -865,8 +816,8 @@ export default function HomePage() {
                           onClick={() => setSelectedSugar(s)}
                           className={`flex-1 py-3 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
                             selectedSugar === s
-                              ? "bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white border-[#f07a4a] shadow-lg shadow-[#e05c3a]/30"
-                              : "border-[#e05c3a]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#f07a4a]"
+                              ? "bg-white text-black border-white shadow-lg shadow-white/30"
+                              : "border-white/30 text-[#9c948a] hover:text-white hover:border-white"
                           }`}
                         >
                           {s}
@@ -878,16 +829,16 @@ export default function HomePage() {
               )}
             </div>
 
-            <div className="p-5 border-t border-[#e05c3a]/20 flex gap-3">
+            <div className="p-5 border-t border-white/20 flex gap-3">
               <button
                 onClick={() => setOptionModal(null)}
-                className="px-5 py-3 rounded-full border border-[#e05c3a]/30 text-[#9c948a] font-semibold hover:text-[#f4ede2] hover:border-[#f07a4a] hover:scale-105 active:scale-95 transition-all"
+                className="px-5 py-3 rounded-full border border-white/30 text-[#9c948a] font-semibold hover:text-white hover:border-white hover:scale-105 active:scale-95 transition-all"
               >
                 Batal
               </button>
               <button
                 onClick={confirmOption}
-                className="flex-1 bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="flex-1 bg-white text-black font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 Tambah ke Keranjang
               </button>
@@ -899,27 +850,27 @@ export default function HomePage() {
       {/* SUCCESS MODAL */}
       {successOrder && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="menu-card-enter bg-[#131110] border border-[#e05c3a]/30 rounded-2xl w-full max-w-sm p-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 mx-auto flex items-center justify-center text-white mb-5 shadow-lg shadow-green-500/30">
+          <div className="menu-card-enter bg-[#131110] border border-white/30 rounded-2xl w-full max-w-sm p-8 text-center">
+            <div className="w-20 h-20 rounded-full bg-white mx-auto flex items-center justify-center text-black mb-5 shadow-lg shadow-white/30">
               <IconCheck />
             </div>
             <h3 className="text-2xl font-bold mb-2">Pesanan Terkirim!</h3>
             <p className="text-[#9c948a] mb-4 text-sm">
               Pesananmu sedang diproses dapur.
             </p>
-            <div className="inline-flex items-center gap-2 bg-[#e05c3a]/10 border border-[#e05c3a]/30 rounded-full px-4 py-2 mb-6">
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/30 rounded-full px-4 py-2 mb-6">
               <IconMapPin />
-              <span className="text-[#f07a4a] font-bold text-sm">
+              <span className="text-white font-bold text-sm">
                 Meja {successOrder.table_number}
               </span>
-              <span className="text-[#f07a4a]/50">·</span>
-              <span className="text-[#f07a4a] font-bold text-sm">
+              <span className="text-white/50">·</span>
+              <span className="text-white font-bold text-sm">
                 {rupiah(successOrder.total)}
               </span>
             </div>
             <button
               onClick={() => setSuccessOrder(null)}
-              className="w-full bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="w-full bg-white text-black font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               Pesan Lagi
             </button>
