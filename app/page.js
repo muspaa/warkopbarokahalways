@@ -69,6 +69,11 @@ const IconStar = () => (
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
   </svg>
 );
+const IconSparkle = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+    <path d="M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2z" />
+  </svg>
+);
 
 /* ========== REVEAL ON SCROLL ========== */
 function useRevealOnScroll() {
@@ -126,6 +131,7 @@ export default function HomePage() {
   const [optionModal, setOptionModal] = useState(null);
   const [selectedTemp, setSelectedTemp] = useState(null);
   const [selectedSugar, setSelectedSugar] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [customerName, setCustomerName] = useState("");
@@ -190,11 +196,23 @@ export default function HomePage() {
   }
 
   function handleAdd(item) {
-    if (item.category === "minuman") {
+    const variants = Array.isArray(item.variants) ? item.variants : [];
+    const isMinuman = item.category === "minuman";
+
+    if (isMinuman && (item.has_variants || variants.length > 0)) {
+      // Buka modal dengan pilihan suhu, gula, dan varian
       setOptionModal(item);
       setSelectedTemp(null);
       setSelectedSugar(null);
+      setSelectedVariant(null);
+    } else if (isMinuman) {
+      // Minuman biasa: hanya suhu & gula
+      setOptionModal(item);
+      setSelectedTemp(null);
+      setSelectedSugar(null);
+      setSelectedVariant(null);
     } else {
+      // Makanan & snack: langsung tambah
       addToCart(item);
     }
   }
@@ -204,7 +222,20 @@ export default function HomePage() {
       alert("Pilih suhu dan gula dulu");
       return;
     }
-    addToCart(optionModal, { temp: selectedTemp, sugar: selectedSugar });
+
+    const variants = Array.isArray(optionModal.variants) ? optionModal.variants : [];
+    const needsVariant = optionModal.has_variants || variants.length > 0;
+
+    if (needsVariant && !selectedVariant) {
+      alert("Pilih varian rasa dulu");
+      return;
+    }
+
+    addToCart(optionModal, {
+      temp: selectedTemp,
+      sugar: selectedSugar,
+      variant: needsVariant ? selectedVariant : null,
+    });
     setOptionModal(null);
   }
 
@@ -213,7 +244,9 @@ export default function HomePage() {
 
   function variantLabel(v) {
     if (!v) return "";
-    return `${v.temp} · Gula ${v.sugar}`;
+    const parts = [v.temp, `Gula ${v.sugar}`];
+    if (v.variant) parts.push(v.variant);
+    return parts.join(" · ");
   }
 
   async function submitOrder() {
@@ -244,7 +277,9 @@ export default function HomePage() {
       const items = cart.map((x) => ({
         order_id: order.id,
         menu_item_id: x.id,
-        menu_name: x.name,
+        menu_name: x.variant?.variant
+          ? `${x.name} (${x.variant.variant})`
+          : x.name,
         price: x.price,
         quantity: x.qty,
         variant_temp: x.variant?.temp || null,
@@ -274,6 +309,16 @@ export default function HomePage() {
     { k: "snack", l: "Cemilan" },
     { k: "minuman", l: "Minuman" },
   ];
+
+  // Cek apakah optionModal butuh varian
+  const optionVariants = optionModal
+    ? Array.isArray(optionModal.variants)
+      ? optionModal.variants
+      : []
+    : [];
+  const optionNeedsVariant = optionModal
+    ? optionModal.has_variants || optionVariants.length > 0
+    : false;
 
   return (
     <div className="min-h-screen bg-[#0b0a08] text-[#f4ede2]">
@@ -384,6 +429,9 @@ export default function HomePage() {
           />
 
           <Reveal className="relative z-10">
+            <h1 className="text-3xl sm:text-5xl font-bold text-[#f4ede2] leading-tight mb-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]">
+              WARKOP <span className="text-[#f07a4a]">BAROKAH ALWAYS</span>
+            </h1>
 
             <a
               href="#menu"
@@ -430,65 +478,93 @@ export default function HomePage() {
             <p className="text-center py-16 text-[#9c948a]">Menu tidak ditemukan</p>
           ) : (
             <div key={filter} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {filteredMenus.map((m, idx) => (
-                <Reveal key={m.id} delay={idx * 0.05}>
-                  <article className="menu-card-enter group bg-gradient-to-b from-[#e05c3a]/5 to-[#131110] border border-[#e05c3a]/20 rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:border-[#e05c3a]/50 hover:shadow-2xl hover:shadow-[#e05c3a]/20 transition-all duration-300 flex flex-col h-full">
-                    <div className="relative aspect-[4/3] overflow-hidden bg-[#1a1714]">
-                      {m.image_url ? (
-                        <img
-                          src={m.image_url}
-                          alt={m.name}
-                          loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[#9c948a]">
-                          <IconFood />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#131110] via-transparent to-transparent pointer-events-none" />
+              {filteredMenus.map((m, idx) => {
+                const variants = Array.isArray(m.variants) ? m.variants : [];
+                const hasVariant = m.has_variants || variants.length > 0;
+                return (
+                  <Reveal key={m.id} delay={idx * 0.05}>
+                    <article className="menu-card-enter group bg-gradient-to-b from-[#e05c3a]/5 to-[#131110] border border-[#e05c3a]/20 rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:border-[#e05c3a]/50 hover:shadow-2xl hover:shadow-[#e05c3a]/20 transition-all duration-300 flex flex-col h-full">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-[#1a1714]">
+                        {m.image_url ? (
+                          <img
+                            src={m.image_url}
+                            alt={m.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[#9c948a]">
+                            <IconFood />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#131110] via-transparent to-transparent pointer-events-none" />
 
-                      {m.is_favorite && (
-                        <span className="absolute top-2 right-2 bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white text-[9px] font-extrabold px-2 py-1 rounded-md tracking-wider uppercase">
-                          Favorit
-                        </span>
-                      )}
-                    </div>
+                        {m.is_favorite && (
+                          <span className="absolute top-2 right-2 bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white text-[9px] font-extrabold px-2 py-1 rounded-md tracking-wider uppercase">
+                            Favorit
+                          </span>
+                        )}
+                        {hasVariant && (
+                          <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-gradient-to-br from-purple-500 to-pink-500 text-white text-[9px] font-extrabold px-2 py-1 rounded-md tracking-wider uppercase">
+                            <IconSparkle /> Varian Rasa
+                          </span>
+                        )}
+                      </div>
 
-                    <div className="p-3 sm:p-4 flex flex-col flex-1 -mt-6 relative z-10">
-                      <div className="flex items-center gap-1.5 text-[10px] text-[#9c948a] mb-1">
-                        <div className="flex text-[#d4a24c] gap-0.5">
-                          {Array(5).fill(0).map((_, i) => <IconStar key={i} />)}
+                      <div className="p-3 sm:p-4 flex flex-col flex-1 -mt-6 relative z-10">
+                        <div className="flex items-center gap-1.5 text-[10px] text-[#9c948a] mb-1">
+                          <div className="flex text-[#d4a24c] gap-0.5">
+                            {Array(5).fill(0).map((_, i) => <IconStar key={i} />)}
+                          </div>
+                          <span>{Number(m.rating || 4.7).toFixed(1)}</span>
                         </div>
-                        <span>{Number(m.rating || 4.7).toFixed(1)}</span>
-                      </div>
-                      <h3 className="text-sm sm:text-base font-bold mb-1 group-hover:text-[#f07a4a] transition-colors line-clamp-1">
-                        {m.name}
-                      </h3>
-                      <p className="text-[11px] sm:text-xs text-[#9c948a] line-clamp-2 flex-1 mb-3">
-                        {m.description}
-                      </p>
-                      <div className="flex items-center justify-between pt-2.5 border-t border-[#e05c3a]/15">
-                        <div>
-                          <p className="text-[8px] text-[#9c948a] uppercase tracking-wider font-bold">
-                            Harga
-                          </p>
-                          <p className="text-[#f07a4a] font-bold text-sm sm:text-base">
-                            {rupiah(m.price)}
-                          </p>
+                        <h3 className="text-sm sm:text-base font-bold mb-1 group-hover:text-[#f07a4a] transition-colors line-clamp-1">
+                          {m.name}
+                        </h3>
+                        <p className="text-[11px] sm:text-xs text-[#9c948a] line-clamp-2 flex-1 mb-3">
+                          {m.description}
+                        </p>
+
+                        {hasVariant && variants.length > 0 && (
+                          <div className="mb-3 flex flex-wrap gap-1">
+                            {variants.slice(0, 3).map((v) => (
+                              <span
+                                key={v}
+                                className="text-[9px] bg-purple-500/15 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded-full font-semibold"
+                              >
+                                {v}
+                              </span>
+                            ))}
+                            {variants.length > 3 && (
+                              <span className="text-[9px] bg-white/5 text-[#9c948a] border border-white/10 px-1.5 py-0.5 rounded-full font-semibold">
+                                +{variants.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-2.5 border-t border-[#e05c3a]/15">
+                          <div>
+                            <p className="text-[8px] text-[#9c948a] uppercase tracking-wider font-bold">
+                              Harga
+                            </p>
+                            <p className="text-[#f07a4a] font-bold text-sm sm:text-base">
+                              {rupiah(m.price)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleAdd(m)}
+                            className="w-9 h-9 rounded-full bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white flex items-center justify-center shadow-lg shadow-[#e05c3a]/40 hover:rotate-90 hover:scale-110 active:scale-95 transition-all duration-300"
+                            aria-label={`Tambah ${m.name}`}
+                          >
+                            <IconPlus />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleAdd(m)}
-                          className="w-9 h-9 rounded-full bg-gradient-to-br from-[#e05c3a] to-[#f07a4a] text-white flex items-center justify-center shadow-lg shadow-[#e05c3a]/40 hover:rotate-90 hover:scale-110 active:scale-95 transition-all duration-300"
-                          aria-label={`Tambah ${m.name}`}
-                        >
-                          <IconPlus />
-                        </button>
                       </div>
-                    </div>
-                  </article>
-                </Reveal>
-              ))}
+                    </article>
+                  </Reveal>
+                );
+              })}
             </div>
           )}
         </section>
@@ -660,13 +736,13 @@ export default function HomePage() {
 
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-2">
-                  Nama Kamu
+                  Nama Kamu *
                 </label>
                 <input
                   type="text"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder=""
+                  placeholder="Contoh: Budi"
                   className="w-full px-4 py-3 rounded-xl border border-[#e05c3a]/30 bg-transparent text-[#f4ede2] placeholder-[#9c948a] outline-none focus:border-[#f07a4a] focus:ring-2 focus:ring-[#e05c3a]/20 transition-all"
                 />
               </div>
@@ -678,7 +754,7 @@ export default function HomePage() {
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder=""
+                  placeholder="Contoh: jangan pakai pedas"
                   rows={2}
                   className="w-full px-4 py-3 rounded-xl border border-[#e05c3a]/30 bg-transparent text-[#f4ede2] placeholder-[#9c948a] outline-none focus:border-[#f07a4a] focus:ring-2 focus:ring-[#e05c3a]/20 transition-all resize-none"
                 />
@@ -711,10 +787,10 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* OPTION MODAL */}
+      {/* OPTION MODAL — dengan varian rasa */}
       {optionModal && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="menu-card-enter bg-[#131110] border border-[#e05c3a]/30 rounded-2xl w-full max-w-md">
+          <div className="menu-card-enter bg-[#131110] border border-[#e05c3a]/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b border-[#e05c3a]/20 flex justify-between items-start">
               <div className="flex items-start gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-[#e05c3a]/10 text-[#f07a4a] flex items-center justify-center shrink-0">
@@ -732,10 +808,36 @@ export default function HomePage() {
                 <IconClose />
               </button>
             </div>
+
             <div className="p-5 space-y-5">
+              {/* Pilih Varian (kalau ada) */}
+              {optionNeedsVariant && optionVariants.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-3 flex items-center gap-1.5">
+                    <IconSparkle /> Pilih Rasa
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {optionVariants.map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => setSelectedVariant(v)}
+                        className={`px-4 py-2 rounded-full border text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${
+                          selectedVariant === v
+                            ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white border-pink-400 shadow-lg shadow-purple-500/30"
+                            : "border-[#e05c3a]/30 text-[#9c948a] hover:text-[#f4ede2] hover:border-[#f07a4a]"
+                        }`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pilih Suhu */}
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-3">
-                  Pilih 
+                  Pilih Suhu
                 </p>
                 <div className="flex gap-2">
                   {["Ice", "Hangat", "Panas"].map((t) => (
@@ -753,9 +855,11 @@ export default function HomePage() {
                   ))}
                 </div>
               </div>
+
+              {/* Pilih Gula */}
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-[#f07a4a] font-bold mb-3">
-                  Pilih
+                  Pilih Gula
                 </p>
                 <div className="flex gap-2">
                   {["Manis", "Biasa", "Pahit"].map((s) => (
@@ -774,6 +878,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+
             <div className="p-5 border-t border-[#e05c3a]/20 flex gap-3">
               <button
                 onClick={() => setOptionModal(null)}
