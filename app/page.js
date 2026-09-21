@@ -58,12 +58,6 @@ const IconArrowRight = () => (
     <polyline points="12 5 19 12 12 19" />
   </svg>
 );
-const IconArrowDown = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-    <line x1="12" y1="5" x2="12" y2="19" />
-    <polyline points="19 12 12 19 5 12" />
-  </svg>
-);
 
 /* ========== REVEAL ON SCROLL ========== */
 function useRevealOnScroll() {
@@ -357,18 +351,6 @@ export default function HomePage() {
           animation: cardEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
-        @keyframes pulseGlow {
-          0%, 100% {
-            box-shadow: 0 8px 24px -8px rgba(255, 255, 255, 0.4);
-          }
-          50% {
-            box-shadow: 0 12px 32px -6px rgba(255, 255, 255, 0.7);
-          }
-        }
-        .btn-pulse {
-          animation: pulseGlow 2.5s ease-in-out infinite;
-        }
-
         @keyframes toastIn {
           from { transform: translate(-50%, 80px); opacity: 0; }
           to { transform: translate(-50%, 0); opacity: 1; }
@@ -407,25 +389,15 @@ export default function HomePage() {
         </button>
       </header>
 
-      <main className="pt-24">
-        {/* HERO */}
+      <main className="pt-20">
+        {/* HERO — tanpa tombol Menu */}
         <section className="relative min-h-[55vh] flex flex-col justify-end px-4 sm:px-8 pt-16 pb-12 overflow-hidden">
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: "url('https://cdn.zass.in/GsBeAoEP8F.png')",
+              backgroundImage: "url('https://cdn.zass.in/CuNIgTQq4a.png')",
             }}
           />
-
-          <Reveal className="relative z-10">
-            <a
-              href="#menu"
-              className="inline-flex items-center gap-1.5 bg-[#1a1714] hover:bg-[#241f1a] text-white font-semibold text-xs tracking-wide px-4 py-2.5 rounded-full hover:-translate-y-0.5 active:scale-95 transition-all"
-            >
-              Menu
-              <IconArrowDown />
-            </a>
-          </Reveal>
         </section>
 
         {/* MENU */}
@@ -488,23 +460,18 @@ export default function HomePage() {
                       )}
                     </div>
 
-                    <div className="p-3 sm:p-4 flex flex-col flex-1 -mt-6 relative z-10">
-                      <h3 className="text-sm sm:text-base font-bold mb-3 group-hover:text-white transition-colors line-clamp-2 min-h-[2.5rem]">
+                    {/* Nama + garis + harga — TANPA JARAK */}
+                    <div className="px-3 sm:px-4 pt-3 pb-3 flex flex-col flex-1 -mt-6 relative z-10">
+                      <h3 className="text-sm sm:text-base font-bold text-white leading-tight line-clamp-2 mb-0">
                         {m.name}
                       </h3>
-
-                      <div className="flex items-center justify-between pt-2.5 border-t border-white/15 mt-auto">
-                        <div>
-                          <p className="text-[8px] text-[#9c948a] uppercase tracking-wider font-bold">
-                            Harga
-                          </p>
-                          <p className="text-white font-bold text-sm sm:text-base">
-                            {rupiah(m.price)}
-                          </p>
-                        </div>
+                      <div className="flex items-center justify-between pt-1 mt-0 border-t border-white/15">
+                        <p className="text-white font-bold text-sm sm:text-base">
+                          {rupiah(m.price)}
+                        </p>
                         <button
                           onClick={() => handleAdd(m)}
-                          className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-lg shadow-white/40 hover:rotate-90 hover:scale-110 active:scale-95 transition-all duration-300"
+                          className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center hover:rotate-90 hover:scale-110 active:scale-95 transition-all duration-300"
                           aria-label={`Tambah ${m.name}`}
                         >
                           <IconPlus />
@@ -617,7 +584,7 @@ export default function HomePage() {
               setShowCheckout(true);
             }}
             disabled={cart.length === 0}
-            className="btn-pulse w-full bg-white text-black font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="w-full bg-white text-black font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             Pesan Sekarang <IconArrowRight />
           </button>
@@ -811,8 +778,7 @@ export default function HomePage() {
                     </p>
                     <div className="flex gap-2">
                       {["Manis", "Biasa", "Pahit"].map((s) => (
-                        <button
-                          key={s}
+                        <button                          key={s}
                           onClick={() => setSelectedSugar(s)}
                           className={`flex-1 py-3 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
                             selectedSugar === s
