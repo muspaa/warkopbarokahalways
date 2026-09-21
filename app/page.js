@@ -307,6 +307,12 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0b0a08] text-[#f4ede2]">
+      {/* FONT OSWALD DARI GOOGLE */}
+      <link
+        href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap"
+        rel="stylesheet"
+      />
+
       <style jsx global>{`
         @keyframes shineSweep {
           0% { left: -100%; }
@@ -358,12 +364,19 @@ export default function HomePage() {
         .toast-anim {
           animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+
+        /* FONT HEADER */
+        .font-oswald {
+          font-family: 'Oswald', sans-serif;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+        }
       `}</style>
 
       {/* HEADER */}
       <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-4 px-4 sm:px-8 py-3 bg-[#0b0a08]/90 backdrop-blur-md border-b border-white/20">
         <a href="#top" className="flex items-center shrink-0">
-          <h1 className="text-lg sm:text-xl font-bold text-white tracking-wider leading-tight">
+          <h1 className="font-oswald text-lg sm:text-2xl text-white leading-tight">
             WARKOP BAROKAH ALWAYS
           </h1>
         </a>
@@ -390,7 +403,7 @@ export default function HomePage() {
       </header>
 
       <main className="pt-20">
-        {/* HERO — tanpa tombol Menu */}
+        {/* HERO */}
         <section className="relative min-h-[55vh] flex flex-col justify-end px-4 sm:px-8 pt-16 pb-12 overflow-hidden">
           <div
             className="absolute inset-0 bg-cover bg-center"
@@ -408,7 +421,7 @@ export default function HomePage() {
                 <p className="text-[10px] tracking-[0.3em] text-white uppercase mb-1 font-bold">
                   MENU MAKANAN
                 </p>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white">
+                <h2 className="font-oswald text-2xl sm:text-3xl text-white">
                   BAROKAH ALWAYS
                 </h2>
               </div>
@@ -420,7 +433,7 @@ export default function HomePage() {
                     onClick={() => setFilter(k)}
                     className={`btn-shine flex-1 sm:flex-initial inline-flex items-center justify-center px-3 sm:px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all hover:scale-105 active:scale-95 ${
                       filter === k
-                        ? "bg-white text-black shadow-lg shadow-white/30"
+                        ? "bg-white text-black"
                         : "bg-[#1a1714] text-[#9c948a] hover:text-white hover:bg-[#241f1a]"
                     }`}
                   >
@@ -437,7 +450,7 @@ export default function HomePage() {
             <div key={filter} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {filteredMenus.map((m, idx) => (
                 <Reveal key={m.id} delay={idx * 0.05}>
-                  <article className="menu-card-enter group bg-gradient-to-b from-white/5 to-[#131110] border border-white/20 rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:border-white/50 hover:shadow-2xl hover:shadow-white/20 transition-all duration-300 flex flex-col h-full">
+                  <article className="menu-card-enter group bg-gradient-to-b from-white/5 to-[#131110] border border-white/20 rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:border-white/50 transition-all duration-300 flex flex-col h-full">
                     <div className="relative aspect-[4/3] overflow-hidden bg-[#1a1714]">
                       {m.image_url ? (
                         <img
@@ -460,7 +473,6 @@ export default function HomePage() {
                       )}
                     </div>
 
-                    {/* Nama + garis + harga — TANPA JARAK */}
                     <div className="px-3 sm:px-4 pt-3 pb-3 flex flex-col flex-1 -mt-6 relative z-10">
                       <h3 className="text-sm sm:text-base font-bold text-white leading-tight line-clamp-2 mb-0">
                         {m.name}
@@ -491,7 +503,7 @@ export default function HomePage() {
       </footer>
 
       {toast && (
-        <div className="toast-anim fixed bottom-6 left-1/2 -translate-x-1/2 bg-white text-black font-semibold text-sm px-5 py-3 rounded-full shadow-2xl shadow-white/50 z-[400] flex items-center gap-2">
+        <div className="toast-anim fixed bottom-6 left-1/2 -translate-x-1/2 bg-white text-black font-semibold text-sm px-5 py-3 rounded-full z-[400] flex items-center gap-2">
           <IconCheck />
           {toast}
         </div>
@@ -584,7 +596,7 @@ export default function HomePage() {
               setShowCheckout(true);
             }}
             disabled={cart.length === 0}
-            className="w-full bg-white text-black font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="w-full bg-white text-black font-bold py-3 rounded-full disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             Pesan Sekarang <IconArrowRight />
           </button>
@@ -687,7 +699,7 @@ export default function HomePage() {
               <button
                 onClick={submitOrder}
                 disabled={submitting || !tableNumber}
-                className="flex-1 bg-white text-black font-bold py-3 rounded-full disabled:opacity-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="flex-1 bg-white text-black font-bold py-3 rounded-full disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
@@ -738,7 +750,7 @@ export default function HomePage() {
                         onClick={() => setSelectedVariant(v)}
                         className={`px-4 py-2.5 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
                           selectedVariant === v
-                            ? "bg-white text-black border-white shadow-lg shadow-white/30"
+                            ? "bg-white text-black border-white"
                             : "border-white/30 text-[#9c948a] hover:text-white hover:border-white"
                         }`}
                       >
@@ -762,7 +774,7 @@ export default function HomePage() {
                           onClick={() => setSelectedTemp(t)}
                           className={`flex-1 py-3 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
                             selectedTemp === t
-                              ? "bg-white text-black border-white shadow-lg shadow-white/30"
+                              ? "bg-white text-black border-white"
                               : "border-white/30 text-[#9c948a] hover:text-white hover:border-white"
                           }`}
                         >
@@ -778,11 +790,12 @@ export default function HomePage() {
                     </p>
                     <div className="flex gap-2">
                       {["Manis", "Biasa", "Pahit"].map((s) => (
-                        <button                          key={s}
+                        <button
+                          key={s}
                           onClick={() => setSelectedSugar(s)}
                           className={`flex-1 py-3 rounded-full border text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${
                             selectedSugar === s
-                              ? "bg-white text-black border-white shadow-lg shadow-white/30"
+                              ? "bg-white text-black border-white"
                               : "border-white/30 text-[#9c948a] hover:text-white hover:border-white"
                           }`}
                         >
@@ -804,7 +817,7 @@ export default function HomePage() {
               </button>
               <button
                 onClick={confirmOption}
-                className="flex-1 bg-white text-black font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="flex-1 bg-white text-black font-bold py-3 rounded-full hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 Tambah ke Keranjang
               </button>
@@ -817,7 +830,7 @@ export default function HomePage() {
       {successOrder && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <div className="menu-card-enter bg-[#131110] border border-white/30 rounded-2xl w-full max-w-sm p-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-white mx-auto flex items-center justify-center text-black mb-5 shadow-lg shadow-white/30">
+            <div className="w-20 h-20 rounded-full bg-white mx-auto flex items-center justify-center text-black mb-5">
               <IconCheck />
             </div>
             <h3 className="text-2xl font-bold mb-2">Pesanan Terkirim!</h3>
@@ -836,7 +849,7 @@ export default function HomePage() {
             </div>
             <button
               onClick={() => setSuccessOrder(null)}
-              className="w-full bg-white text-black font-bold py-3 rounded-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="w-full bg-white text-black font-bold py-3 rounded-full hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               Pesan Lagi
             </button>
