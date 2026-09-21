@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
 
-/* ========== ICON ========== */
 const IconOrders = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -49,7 +48,9 @@ export default function RiwayatPage() {
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
-  useEffect(() => { load(); }, [date]);
+  useEffect(() => {
+    load();
+  }, [date]);
 
   async function load() {
     setLoading(true);
@@ -77,20 +78,24 @@ export default function RiwayatPage() {
     }).format(n);
 
   const fmtTime = (s) =>
-    new Date(s).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    new Date(s).toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
-  const totalSelesai = orders.filter((o) => o.status === "selesai");
-  const totalPendapatan = totalSelesai.reduce((s, o) => s + o.total, 0);
-  const totalDibatalkan = orders.filter((o) => o.status === "dibatalkan").length;
+  const accepted = orders.filter((o) => o.status === "diterima");
+  const rejected = orders.filter((o) => o.status === "ditolak");
+  const revenue = accepted.reduce((s, o) => s + o.total, 0);
 
   function exportCSV() {
     const rows = [
-      ["Waktu", "Customer", "Meja", "Status", "Total", "Catatan"],
+      ["Waktu", "Customer", "Meja", "Status", "Pembayaran", "Total", "Catatan"],
       ...orders.map((o) => [
         new Date(o.created_at).toLocaleString("id-ID"),
         o.customer_name,
         o.table_number || "-",
         o.status,
+        o.payment_method || "-",
         o.total,
         (o.notes || "").replace(/,/g, ";"),
       ]),
@@ -105,21 +110,24 @@ export default function RiwayatPage() {
 
   const statusColors = {
     pending: "bg-amber-100 text-amber-700 border-amber-200",
-    diproses: "bg-blue-100 text-blue-700 border-blue-200",
-    selesai: "bg-green-100 text-green-700 border-green-200",
-    dibatalkan: "bg-red-100 text-red-700 border-red-200",
+    diterima: "bg-green-100 text-green-700 border-green-200",
+    ditolak: "bg-red-100 text-red-700 border-red-200",
+  };
+  const statusLabels = {
+    pending: "Menunggu",
+    diterima: "Diterima",
+    ditolak: "Ditolak",
   };
 
   const summary = [
     { label: "Total Pesanan", value: orders.length, Icon: IconOrders, color: "from-blue-500 to-cyan-500" },
-    { label: "Selesai", value: totalSelesai.length, Icon: IconCheck, color: "from-green-500 to-emerald-500" },
-    { label: "Dibatalkan", value: totalDibatalkan, Icon: IconX, color: "from-red-500 to-rose-500" },
-    { label: "Pendapatan", value: rp(totalPendapatan), Icon: IconWallet, color: "from-[#d4a24c] to-[#e8bd6e]" },
+    { label: "Diterima", value: accepted.length, Icon: IconCheck, color: "from-green-500 to-emerald-500" },
+    { label: "Ditolak", value: rejected.length, Icon: IconX, color: "from-red-500 to-rose-500" },
+    { label: "Pendapatan", value: rp(revenue), Icon: IconWallet, color: "from-slate-700 to-slate-900" },
   ];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Riwayat Pesanan</h1>
@@ -130,7 +138,7 @@ export default function RiwayatPage() {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="px-4 py-3 rounded-xl border border-slate-200 bg-white outline-none focus:border-[#d4a24c] focus:ring-2 focus:ring-[#d4a24c]/20 text-sm font-medium"
+            className="px-4 py-3 rounded-xl border border-slate-200 bg-white outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/20 text-sm font-medium"
           />
           <button
             onClick={exportCSV}
@@ -142,22 +150,22 @@ export default function RiwayatPage() {
         </div>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {summary.map((s, i) => (
           <div key={i} className="bg-white rounded-2xl p-4 border border-slate-200">
-            <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${s.color} text-white flex items-center justify-center shadow-md`}>
+            <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${s.color} text-white flex items-center justify-center`}>
               <s.Icon />
             </div>
             <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-wider">
               {s.label}
             </p>
-            <p className="text-lg sm:text-xl font-bold text-slate-800 mt-0.5 truncate">{s.value}</p>
+            <p className="text-lg sm:text-xl font-bold text-slate-800 mt-0.5 truncate">
+              {s.value}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -167,6 +175,7 @@ export default function RiwayatPage() {
                 <th className="text-left px-4 py-3 font-bold uppercase text-[11px] tracking-wider">Customer</th>
                 <th className="text-left px-4 py-3 font-bold uppercase text-[11px] tracking-wider">Meja</th>
                 <th className="text-left px-4 py-3 font-bold uppercase text-[11px] tracking-wider">Status</th>
+                <th className="text-left px-4 py-3 font-bold uppercase text-[11px] tracking-wider">Bayar</th>
                 <th className="text-right px-4 py-3 font-bold uppercase text-[11px] tracking-wider">Total</th>
               </tr>
             </thead>
@@ -174,14 +183,14 @@ export default function RiwayatPage() {
               {loading ? (
                 [1, 2, 3].map((i) => (
                   <tr key={i}>
-                    <td colSpan={5} className="p-4">
+                    <td colSpan={6} className="p-4">
                       <div className="h-6 bg-slate-100 rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-20">
+                  <td colSpan={6} className="text-center py-20">
                     <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-400">
                       <IconInbox />
                     </div>
@@ -195,13 +204,20 @@ export default function RiwayatPage() {
                     <td className="px-4 py-3 text-slate-600 font-medium">{fmtTime(o.created_at)}</td>
                     <td className="px-4 py-3 font-semibold text-slate-800">{o.customer_name}</td>
                     <td className="px-4 py-3 text-slate-600">
-                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#d4a24c]/10 text-[#d4a24c] font-bold text-xs">
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white font-bold text-xs">
                         {o.table_number || "-"}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full border uppercase tracking-wider ${statusColors[o.status]}`}>
-                        {o.status}
+                      <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full border uppercase tracking-wider ${statusColors[o.status] || "bg-slate-100 text-slate-600"}`}>
+                        {statusLabels[o.status] || o.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${
+                        o.payment_method === "qris" ? "bg-purple-100 text-purple-700" : "bg-green-100 text-green-700"
+                      }`}>
+                        {o.payment_method === "qris" ? "QRIS" : "CASH"}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right font-bold text-slate-800">{rp(o.total)}</td>
