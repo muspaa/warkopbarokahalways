@@ -5,22 +5,23 @@ import Link from "next/link";
 import { supabase } from "../../lib/supabaseClient";
 
 /* ========== ICON ========== */
-const IconOrders = () => (
+const IconInbox = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-    <polyline points="14 2 14 8 20 8" />
-  </svg>
-);
-const IconClock = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
+    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
   </svg>
 );
 const IconCheck = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
     <polyline points="22 4 12 14.01 9 11.01" />
+  </svg>
+);
+const IconX = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="15" y1="9" x2="9" y2="15" />
+    <line x1="9" y1="9" x2="15" y2="15" />
   </svg>
 );
 const IconWallet = () => (
@@ -30,12 +31,6 @@ const IconWallet = () => (
     <path d="M18 12a2 2 0 0 0 0 4h4v-4z" />
   </svg>
 );
-const IconBell = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-  </svg>
-);
 const IconKitchen = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
     <path d="M6 2v6a3 3 0 0 0 3 3v11" />
@@ -43,10 +38,12 @@ const IconKitchen = () => (
     <path d="M18 2c-1.5 3-1.5 6 0 9v11" />
   </svg>
 );
-const IconPlus = () => (
+const IconMenu = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-    <line x1="12" y1="5" x2="12" y2="19" />
-    <line x1="5" y1="12" x2="19" y2="12" />
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
   </svg>
 );
 const IconTable = () => (
@@ -62,13 +59,19 @@ const IconArrowRight = () => (
     <polyline points="12 5 19 12 12 19" />
   </svg>
 );
+const IconBell = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+);
 
 export default function AdminOverview() {
   const [stats, setStats] = useState({
     todayOrders: 0,
     pending: 0,
-    processing: 0,
-    done: 0,
+    accepted: 0,
+    rejected: 0,
     revenue: 0,
   });
   const [recentOrders, setRecentOrders] = useState([]);
@@ -78,7 +81,11 @@ export default function AdminOverview() {
     loadStats();
     const channel = supabase
       .channel("orders-overview")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => loadStats())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        () => loadStats()
+      )
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, []);
@@ -96,9 +103,11 @@ export default function AdminOverview() {
       setStats({
         todayOrders: orders.length,
         pending: orders.filter((o) => o.status === "pending").length,
-        processing: orders.filter((o) => o.status === "diproses").length,
-        done: orders.filter((o) => o.status === "selesai").length,
-        revenue: orders.filter((o) => o.status === "selesai").reduce((s, o) => s + o.total, 0),
+        accepted: orders.filter((o) => o.status === "diterima").length,
+        rejected: orders.filter((o) => o.status === "ditolak").length,
+        revenue: orders
+          .filter((o) => o.status === "diterima")
+          .reduce((s, o) => s + o.total, 0),
       });
       setRecentOrders(orders.slice(0, 5));
     }
@@ -121,22 +130,20 @@ export default function AdminOverview() {
   }
 
   const cards = [
-    { label: "Pesanan Hari Ini", value: stats.todayOrders, Icon: IconOrders, color: "from-blue-500 to-cyan-500" },
-    { label: "Diproses", value: stats.processing, Icon: IconClock, color: "from-amber-500 to-orange-500" },
-    { label: "Selesai", value: stats.done, Icon: IconCheck, color: "from-green-500 to-emerald-500" },
-    { label: "Pendapatan", value: rp(stats.revenue), Icon: IconWallet, color: "from-[#d4a24c] to-[#e8bd6e]" },
+    { label: "Pesanan Hari Ini", value: stats.todayOrders, Icon: IconInbox, color: "from-blue-500 to-cyan-500" },
+    { label: "Menunggu", value: stats.pending, Icon: IconBell, color: "from-amber-500 to-orange-500" },
+    { label: "Diterima", value: stats.accepted, Icon: IconCheck, color: "from-green-500 to-emerald-500" },
+    { label: "Pendapatan", value: rp(stats.revenue), Icon: IconWallet, color: "from-fuchsia-500 to-pink-500" },
   ];
 
   const quickActions = [
-    { href: "/admin/orders", label: "Kelola Pesanan", Icon: IconOrders },
     { href: "/admin/dapur", label: "Layar Dapur", Icon: IconKitchen },
-    { href: "/admin/menu", label: "Tambah Menu", Icon: IconPlus },
-    { href: "/admin/meja", label: "QR Meja", Icon: IconTable },
+    { href: "/admin/menu", label: "Kelola Menu", Icon: IconMenu },
+    { href: "/admin/meja", label: "Meja & QR", Icon: IconTable },
   ];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Overview</h1>
@@ -161,9 +168,9 @@ export default function AdminOverview() {
         {cards.map((c, i) => (
           <div
             key={i}
-            className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:shadow-lg hover:border-slate-300 transition-all"
+            className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200"
           >
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} text-white flex items-center justify-center shadow-md`}>
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} text-white flex items-center justify-center`}>
               <c.Icon />
             </div>
             <p className="text-[11px] text-slate-500 mt-3 font-medium uppercase tracking-wider">
@@ -179,8 +186,8 @@ export default function AdminOverview() {
       {/* Alert Pending */}
       {stats.pending > 0 && (
         <Link
-          href="/admin/orders"
-          className="block bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+          href="/admin/dapur"
+          className="block bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-5 text-white hover:opacity-95 transition-opacity"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -191,11 +198,11 @@ export default function AdminOverview() {
                 {stats.pending} pesanan menunggu konfirmasi
               </p>
               <p className="text-white/80 text-xs sm:text-sm">
-                Segera proses agar pelanggan tidak menunggu lama
+                Buka layar dapur untuk terima atau tolak
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-1 text-sm font-semibold shrink-0">
-              Lihat <IconArrowRight />
+              Buka <IconArrowRight />
             </div>
           </div>
         </Link>
@@ -206,14 +213,14 @@ export default function AdminOverview() {
         <h2 className="font-bold text-slate-800 mb-3 text-sm uppercase tracking-wider">
           Aksi Cepat
         </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {quickActions.map(({ href, label, Icon }) => (
             <Link
               key={href}
               href={href}
-              className="bg-white rounded-2xl p-4 border border-slate-200 flex flex-col items-start gap-3 hover:border-[#d4a24c] hover:shadow-lg hover:-translate-y-0.5 transition-all group"
+              className="bg-white rounded-2xl p-4 border border-slate-200 flex flex-col items-start gap-3 hover:border-slate-400 transition-all group"
             >
-              <div className="w-10 h-10 rounded-xl bg-[#d4a24c]/10 text-[#d4a24c] flex items-center justify-center group-hover:bg-[#d4a24c] group-hover:text-white transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-colors">
                 <Icon />
               </div>
               <span className="font-semibold text-sm text-slate-800">{label}</span>
@@ -227,10 +234,10 @@ export default function AdminOverview() {
         <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-100">
           <h2 className="font-bold text-slate-800">Pesanan Terbaru</h2>
           <Link
-            href="/admin/orders"
-            className="text-sm text-[#d4a24c] font-semibold hover:underline flex items-center gap-1"
+            href="/admin/riwayat"
+            className="text-sm text-slate-600 font-semibold hover:text-slate-900 flex items-center gap-1"
           >
-            Lihat semua <IconArrowRight />
+            Riwayat <IconArrowRight />
           </Link>
         </div>
 
@@ -243,7 +250,7 @@ export default function AdminOverview() {
         ) : recentOrders.length === 0 ? (
           <div className="p-10 text-center">
             <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-400">
-              <IconOrders />
+              <IconInbox />
             </div>
             <p className="text-slate-500 text-sm">Belum ada pesanan hari ini</p>
           </div>
@@ -252,10 +259,10 @@ export default function AdminOverview() {
             {recentOrders.map((o) => (
               <Link
                 key={o.id}
-                href="/admin/orders"
+                href="/admin/dapur"
                 className="p-4 sm:p-5 flex items-center gap-4 hover:bg-slate-50 transition-colors"
               >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#d4a24c] to-[#e8bd6e] text-[#1a1408] flex items-center justify-center font-bold shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shrink-0">
                   {o.table_number || "?"}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -267,7 +274,9 @@ export default function AdminOverview() {
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-bold text-slate-800 text-sm sm:text-base">{rp(o.total)}</p>
+                  <p className="font-bold text-slate-800 text-sm sm:text-base">
+                    {rp(o.total)}
+                  </p>
                   <StatusBadge status={o.status} />
                 </div>
               </Link>
@@ -282,9 +291,13 @@ export default function AdminOverview() {
 function StatusBadge({ status }) {
   const map = {
     pending: "bg-amber-100 text-amber-700 border-amber-200",
-    diproses: "bg-blue-100 text-blue-700 border-blue-200",
-    selesai: "bg-green-100 text-green-700 border-green-200",
-    dibatalkan: "bg-red-100 text-red-700 border-red-200",
+    diterima: "bg-green-100 text-green-700 border-green-200",
+    ditolak: "bg-red-100 text-red-700 border-red-200",
+  };
+  const label = {
+    pending: "Menunggu",
+    diterima: "Diterima",
+    ditolak: "Ditolak",
   };
   return (
     <span
@@ -292,7 +305,7 @@ function StatusBadge({ status }) {
         map[status] || "bg-slate-100 text-slate-600 border-slate-200"
       }`}
     >
-      {status}
+      {label[status] || status}
     </span>
   );
-}
+  }
