@@ -14,6 +14,7 @@ export default function AdminLogin() {
   const [showDashboard, setShowDashboard] = useState(false);
 
   const videoRef = useRef(null);
+  const skipToAdminRef = useRef(false);
 
   // ========== HANDLE LOGIN ==========
   async function handleLogin(e) {
@@ -22,9 +23,6 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      // Konversi username → email
-      // Kalau user ketik email lengkap, pakai langsung
-      // Kalau cuma username, tambahkan @gmail.com
       let email = username.trim();
       if (!email.includes("@")) {
         email = `${email}@gmail.com`;
@@ -49,8 +47,9 @@ export default function AdminLogin() {
 
       // Sukses → tampilkan dashboard video
       setShowDashboard(true);
+      skipToAdminRef.current = false;
 
-      // Putar video
+      // Putar video setelah render
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.currentTime = 0;
@@ -59,7 +58,6 @@ export default function AdminLogin() {
           const playAttempt = videoRef.current.play();
           if (playAttempt !== undefined) {
             playAttempt.catch(() => {
-              // Kalau autoplay diblokir, mute & coba lagi
               if (videoRef.current) {
                 videoRef.current.muted = true;
                 videoRef.current.play().catch(() => {});
@@ -74,8 +72,20 @@ export default function AdminLogin() {
     }
   }
 
-  // ========== SKIP → LANJUT KE DASHBOARD ADMIN ==========
+  // ========== VIDEO HABIS → OTOMATIS KE DASHBOARD ==========
+  function handleVideoEnded() {
+    if (skipToAdminRef.current) return;
+    skipToAdminRef.current = true;
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+    router.push("/admin");
+  }
+
+  // ========== SKIP → LANJUT KE DASHBOARD ==========
   function handleSkip() {
+    if (skipToAdminRef.current) return;
+    skipToAdminRef.current = true;
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
@@ -212,7 +222,7 @@ export default function AdminLogin() {
         .lock-badge {
           width: 60px;
           height: 60px;
-          margin: 0 auto 24px;
+          margin: 0 auto 32px;
           border-radius: 17px;
           background: linear-gradient(145deg, rgba(239, 68, 68, 0.22), rgba(190, 18, 60, 0.14));
           border: 1px solid rgba(248, 113, 113, 0.4);
@@ -251,24 +261,6 @@ export default function AdminLogin() {
           stroke-linecap: round;
           stroke-linejoin: round;
           filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.7));
-        }
-
-        .login-card h2 {
-          color: #fee2e2;
-          text-align: center;
-          font-size: 22px;
-          font-weight: 600;
-          letter-spacing: -0.3px;
-          margin-bottom: 6px;
-          text-shadow: 0 0 24px rgba(239, 68, 68, 0.4);
-        }
-
-        .login-card .subtitle {
-          color: #7f4a4a;
-          text-align: center;
-          font-size: 13.5px;
-          margin-bottom: 32px;
-          letter-spacing: 0.1px;
         }
 
         .input-group {
@@ -537,9 +529,6 @@ export default function AdminLogin() {
             </svg>
           </div>
 
-          <h2>Admin Panel</h2>
-          <p className="subtitle">Masuk untuk kelola pesanan</p>
-
           <form onSubmit={handleLogin}>
             <div className="input-group">
               <input
@@ -604,7 +593,12 @@ export default function AdminLogin() {
 
       {/* ================= DASHBOARD VIDEO ================= */}
       <div id="dashboard" className={showDashboard ? "active" : ""}>
-        <video ref={videoRef} playsInline preload="auto" loop>
+        <video
+          ref={videoRef}
+          playsInline
+          preload="auto"
+          onEnded={handleVideoEnded}
+        >
           <source src="https://cdn.zass.in/GyFjDgCGBI.mp4" type="video/mp4" />
           Browser Anda tidak mendukung video.
         </video>
@@ -622,4 +616,4 @@ export default function AdminLogin() {
       </div>
     </>
   );
-    }
+                  }
