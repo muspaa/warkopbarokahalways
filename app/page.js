@@ -153,12 +153,12 @@ export default function HomePage() {
   const [successOrder, setSuccessOrder] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // ===== STATE UNTUK SPLASH SCREEN =====
   const [showSplash, setShowSplash] = useState(true);
   const [splashFading, setSplashFading] = useState(false);
 
   const QRIS_IMAGE = "https://cdn.zass.in/mFanmrDx6h.jpg";
   const SPLASH_IMAGE = "https://cdn.zass.in/u2cq07z0eH.jpg";
+  const HERO_IMAGE = "https://cdn.zass.in/CuNIgTQq4a.png";
 
   useEffect(() => {
     (async () => {
@@ -177,12 +177,10 @@ export default function HomePage() {
     if (meja) setTableNumber(meja);
   }, []);
 
-  // ===== FUNGSI KLIK LIHAT MENU =====
   function handleOpenMenu() {
     setSplashFading(true);
     setTimeout(() => {
       setShowSplash(false);
-      // Scroll ke atas setelah splash hilang
       window.scrollTo({ top: 0, behavior: "instant" });
     }, 700);
   }
@@ -388,7 +386,7 @@ export default function HomePage() {
       : []
     : [];
 
-  // ============ RENDER SPLASH ============
+  // ============ SPLASH SCREEN ============
   if (showSplash) {
     return (
       <>
@@ -433,17 +431,14 @@ export default function HomePage() {
             splashFading ? "splash-fade-out" : ""
           }`}
         >
-          {/* Gambar fullscreen */}
           <img
             src={SPLASH_IMAGE}
             alt="Warkop Barokah"
             className="absolute inset-0 w-full h-full object-cover"
           />
 
-          {/* Overlay gelap di bagian bawah biar button kelihatan */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
-          {/* Tombol Lihat Menu — KIRI BAWAH */}
           <div className="absolute bottom-10 left-6 sm:bottom-14 sm:left-12 z-10 splash-btn-anim">
             <button
               onClick={handleOpenMenu}
@@ -469,7 +464,7 @@ export default function HomePage() {
     );
   }
 
-  // ============ RENDER HALAMAN MENU UTAMA ============
+  // ============ HALAMAN MENU UTAMA ============
   return (
     <div className="min-h-screen bg-[#0b0a08] text-[#f4ede2]">
       <link
@@ -575,6 +570,16 @@ export default function HomePage() {
         </header>
 
         <main className="pt-20">
+          {/* ============ HERO IMAGE DI ATAS MENU ============ */}
+          <section className="relative min-h-[55vh] flex flex-col justify-end px-4 sm:px-8 pt-16 pb-12 overflow-hidden">
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `url('${HERO_IMAGE}')`,
+              }}
+            />
+          </section>
+
           {/* MENU */}
           <section id="menu" className="px-3 sm:px-8 py-10 max-w-6xl mx-auto">
             <Reveal className="mb-6">
@@ -827,7 +832,7 @@ export default function HomePage() {
 
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-white font-bold mb-2">
-                  Nama Kamu
+                  Nama Kamu *
                 </label>
                 <input
                   type="text"
@@ -845,7 +850,7 @@ export default function HomePage() {
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Contoh: jangan pakai pedas"
+                  placeholder="kosongkan jika tidak ada"
                   rows={2}
                   className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all resize-none"
                 />
@@ -912,7 +917,7 @@ export default function HomePage() {
                 </div>
                 <div className="text-left flex-1 min-w-0">
                   <p className="font-bold text-white text-base">Bayar Cash</p>
-                  <p className="text-xs text-[#9c948a]"></p>
+                  <p className="text-xs text-[#9c948a]">bayar langsung saat pesanan tiba</p>
                 </div>
                 {paymentMethod === "cash" && (
                   <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center shrink-0">
@@ -941,6 +946,7 @@ export default function HomePage() {
                 <div className="text-left flex-1 min-w-0">
                   <p className="font-bold text-white text-base">QRIS</p>
                   <p className="text-xs text-[#9c948a]">
+                    tunjukan bukti pembayaran saat pesanan tiba
                   </p>
                 </div>
                 {paymentMethod === "qris" && (
@@ -954,7 +960,8 @@ export default function HomePage() {
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-sm text-blue-200">
                   <p className="font-bold mb-1">Bayar Cash</p>
                   <p className="text-xs leading-relaxed">
-                    silakan bayar saat pesanan datang
+                    Silakan bayar ke kasir. Pesanan akan diproses setelah
+                    pembayaran diterima.
                   </p>
                 </div>
               )}
@@ -962,7 +969,7 @@ export default function HomePage() {
               {paymentMethod === "qris" && (
                 <div className="bg-white/5 border border-white/30 rounded-xl p-4 space-y-3">
                   <p className="font-bold text-white text-sm text-center">
-                    Scan QRIS di bawah
+                    📱 Scan QRIS di bawah
                   </p>
                   <div className="bg-white rounded-xl p-3 max-w-xs mx-auto">
                     <img
@@ -972,7 +979,7 @@ export default function HomePage() {
                     />
                   </div>
                   <p className="text-[11px] text-[#9c948a] text-center">
-                    tunjukan bukti pembayaran saat pesanan tiba
+                    Scan dengan aplikasi e-wallet atau m-banking
                   </p>
                 </div>
               )}
@@ -1039,7 +1046,7 @@ export default function HomePage() {
                   <textarea
                     value={itemNote}
                     onChange={(e) => setItemNote(e.target.value)}
-                    placeholder="kosongkan kalo tidak ada"
+                    placeholder="Contoh: Pedas, tanpa sayur, extra kerupuk..."
                     rows={3}
                     className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all resize-none"
                   />
@@ -1080,7 +1087,7 @@ export default function HomePage() {
                     <textarea
                       value={itemNote}
                       onChange={(e) => setItemNote(e.target.value)}
-                      placeholder="kosongkan kalo tidak perlu"
+                      placeholder="kosongkan jika tidak ada"
                       rows={2}
                       className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all resize-none"
                     />
@@ -1092,7 +1099,7 @@ export default function HomePage() {
                 <>
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-white font-bold mb-3">
-                      Pilih
+                      Pilih Suhu
                     </p>
                     <div className="flex gap-2">
                       {["Ice", "Hangat", "Panas"].map((t) => (
@@ -1113,7 +1120,7 @@ export default function HomePage() {
 
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-white font-bold mb-3">
-                      Pilih
+                      Pilih Gula
                     </p>
                     <div className="flex gap-2">
                       {["Manis", "Biasa", "Pahit"].map((s) => (
@@ -1140,7 +1147,7 @@ export default function HomePage() {
                     <textarea
                       value={itemNote}
                       onChange={(e) => setItemNote(e.target.value)}
-                      placeholder="Contoh: Es sedikit"
+                      placeholder="Contoh: kosongkan jika tidak ada"
                       rows={2}
                       className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all resize-none"
                     />
