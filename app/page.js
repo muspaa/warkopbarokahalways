@@ -153,7 +153,12 @@ export default function HomePage() {
   const [successOrder, setSuccessOrder] = useState(null);
   const [toast, setToast] = useState(null);
 
+  // ===== STATE UNTUK SPLASH SCREEN =====
+  const [showSplash, setShowSplash] = useState(true);
+  const [splashFading, setSplashFading] = useState(false);
+
   const QRIS_IMAGE = "https://cdn.zass.in/mFanmrDx6h.jpg";
+  const SPLASH_IMAGE = "https://cdn.zass.in/u2cq07z0eH.jpg";
 
   useEffect(() => {
     (async () => {
@@ -171,6 +176,16 @@ export default function HomePage() {
     const meja = params.get("meja");
     if (meja) setTableNumber(meja);
   }, []);
+
+  // ===== FUNGSI KLIK LIHAT MENU =====
+  function handleOpenMenu() {
+    setSplashFading(true);
+    setTimeout(() => {
+      setShowSplash(false);
+      // Scroll ke atas setelah splash hilang
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }, 700);
+  }
 
   function showToast(text) {
     setToast(text);
@@ -289,7 +304,6 @@ export default function HomePage() {
     return parts.join(" · ");
   }
 
-  // Step 1: Konfirmasi pesanan → lanjut ke pembayaran
   function goToPayment() {
     if (!customerName.trim()) return alert("Nama harus diisi");
     if (!tableNumber.trim()) {
@@ -304,7 +318,6 @@ export default function HomePage() {
     setPaymentMethod(null);
   }
 
-  // Step 2: Pilih metode pembayaran → kirim pesanan
   async function confirmPayment() {
     if (!paymentMethod) {
       alert("Pilih metode pembayaran dulu");
@@ -313,7 +326,6 @@ export default function HomePage() {
 
     setSubmitting(true);
     try {
-      // Simpan order ke Supabase
       const { data: order, error: e1 } = await supabase
         .from("orders")
         .insert({
@@ -347,10 +359,7 @@ export default function HomePage() {
       const { error: e2 } = await supabase.from("order_items").insert(items);
       if (e2) throw e2;
 
-      setSuccessOrder({
-        ...order,
-        payment_method: paymentMethod,
-      });
+      setSuccessOrder({ ...order, payment_method: paymentMethod });
       setCart([]);
       setNotes("");
       setCustomerName("");
@@ -379,6 +388,88 @@ export default function HomePage() {
       : []
     : [];
 
+  // ============ RENDER SPLASH ============
+  if (showSplash) {
+    return (
+      <>
+        <style jsx global>{`
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            background: #0b0a08;
+            overflow: hidden;
+          }
+          @keyframes splashFadeOut {
+            from {
+              opacity: 1;
+              transform: scale(1);
+              filter: blur(0px);
+            }
+            to {
+              opacity: 0;
+              transform: scale(1.08);
+              filter: blur(20px);
+            }
+          }
+          @keyframes fadeInUp {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .splash-fade-out {
+            animation: splashFadeOut 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          }
+          .splash-btn-anim {
+            animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both;
+          }
+        `}</style>
+
+        <div
+          className={`fixed inset-0 z-[9999] bg-[#0b0a08] ${
+            splashFading ? "splash-fade-out" : ""
+          }`}
+        >
+          {/* Gambar fullscreen */}
+          <img
+            src={SPLASH_IMAGE}
+            alt="Warkop Barokah"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+
+          {/* Overlay gelap di bagian bawah biar button kelihatan */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
+          {/* Tombol Lihat Menu — KIRI BAWAH */}
+          <div className="absolute bottom-10 left-6 sm:bottom-14 sm:left-12 z-10 splash-btn-anim">
+            <button
+              onClick={handleOpenMenu}
+              className="group inline-flex items-center gap-3 px-6 py-3.5 rounded-full bg-white text-black font-bold text-sm sm:text-base shadow-2xl shadow-black/40 hover:scale-105 hover:-translate-y-1 active:scale-95 transition-all"
+            >
+              Lihat Menu
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5 transition-transform group-hover:translate-x-1"
+              >
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // ============ RENDER HALAMAN MENU UTAMA ============
   return (
     <div className="min-h-screen bg-[#0b0a08] text-[#f4ede2]">
       <link
@@ -438,6 +529,14 @@ export default function HomePage() {
           animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
+        @keyframes pageFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .page-fade-in {
+          animation: pageFadeIn 0.8s ease-out;
+        }
+
         .font-oswald {
           font-family: 'Oswald', sans-serif;
           font-weight: 700;
@@ -445,134 +544,126 @@ export default function HomePage() {
         }
       `}</style>
 
-      {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-4 px-4 sm:px-8 py-3 bg-[#0b0a08]/90 backdrop-blur-md border-b border-white/20">
-        <a href="#top" className="flex items-center shrink-0">
-          <h1 className="font-oswald text-lg sm:text-2xl text-white leading-tight">
-            WARKOP BAROKAH ALWAYS
-          </h1>
-        </a>
+      <div className="page-fade-in">
+        {/* HEADER */}
+        <header className="fixed top-0 left-0 right-0 z-[100] flex items-center gap-4 px-4 sm:px-8 py-3 bg-[#0b0a08]/90 backdrop-blur-md border-b border-white/20">
+          <a href="#top" className="flex items-center shrink-0">
+            <h1 className="font-oswald text-lg sm:text-2xl text-white leading-tight">
+              WARKOP BAROKAH ALWAYS
+            </h1>
+          </a>
 
-        {tableNumber && (
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-semibold">
-            <IconMapPin />
-            Meja {tableNumber}
-          </div>
-        )}
-
-        <button
-          onClick={() => setCartOpen(true)}
-          className="relative ml-auto flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/40 text-white font-bold text-sm hover:bg-white/20 hover:scale-105 active:scale-95 transition-all"
-        >
-          <IconCart />
-          <span className="hidden sm:inline">Keranjang</span>
-          {totalQty > 0 && (
-            <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 rounded-full bg-white text-black text-xs font-extrabold flex items-center justify-center">
-              {totalQty}
-            </span>
+          {tableNumber && (
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-semibold">
+              <IconMapPin />
+              Meja {tableNumber}
+            </div>
           )}
-        </button>
-      </header>
 
-      <main className="pt-20">
-        {/* HERO */}
-        <section className="relative min-h-[55vh] flex flex-col justify-end px-4 sm:px-8 pt-16 pb-12 overflow-hidden">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: "url('https://cdn.zass.in/CuNIgTQq4a.png')",
-            }}
-          />
-        </section>
+          <button
+            onClick={() => setCartOpen(true)}
+            className="relative ml-auto flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/40 text-white font-bold text-sm hover:bg-white/20 hover:scale-105 active:scale-95 transition-all"
+          >
+            <IconCart />
+            <span className="hidden sm:inline">Keranjang</span>
+            {totalQty > 0 && (
+              <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 rounded-full bg-white text-black text-xs font-extrabold flex items-center justify-center">
+                {totalQty}
+              </span>
+            )}
+          </button>
+        </header>
 
-        {/* MENU */}
-        <section id="menu" className="px-3 sm:px-8 py-10 max-w-6xl mx-auto">
-          <Reveal className="mb-6">
-            <div className="flex flex-col gap-4 pb-4 border-b border-white/20 relative">
-              <div>
-                <p className="text-[10px] tracking-[0.3em] text-white uppercase mb-1 font-bold">
-                  MENU MAKANAN
-                </p>
-                <h2 className="font-oswald text-2xl sm:text-3xl text-white">
-                  BAROKAH ALWAYS
-                </h2>
+        <main className="pt-20">
+          {/* MENU */}
+          <section id="menu" className="px-3 sm:px-8 py-10 max-w-6xl mx-auto">
+            <Reveal className="mb-6">
+              <div className="flex flex-col gap-4 pb-4 border-b border-white/20 relative">
+                <div>
+                  <p className="text-[10px] tracking-[0.3em] text-white uppercase mb-1 font-bold">
+                    MENU MAKANAN
+                  </p>
+                  <h2 className="font-oswald text-2xl sm:text-3xl text-white">
+                    BAROKAH ALWAYS
+                  </h2>
+                </div>
+
+                <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:justify-start">
+                  {FILTERS.map(({ k, l }) => (
+                    <button
+                      key={k}
+                      onClick={() => setFilter(k)}
+                      className={`btn-shine flex-1 sm:flex-initial inline-flex items-center justify-center px-3 sm:px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all hover:scale-105 active:scale-95 ${
+                        filter === k
+                          ? "bg-white text-black"
+                          : "bg-[#1a1714] text-[#9c948a] hover:text-white hover:bg-[#241f1a]"
+                      }`}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
               </div>
+            </Reveal>
 
-              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:justify-start">
-                {FILTERS.map(({ k, l }) => (
-                  <button
-                    key={k}
-                    onClick={() => setFilter(k)}
-                    className={`btn-shine flex-1 sm:flex-initial inline-flex items-center justify-center px-3 sm:px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all hover:scale-105 active:scale-95 ${
-                      filter === k
-                        ? "bg-white text-black"
-                        : "bg-[#1a1714] text-[#9c948a] hover:text-white hover:bg-[#241f1a]"
-                    }`}
-                  >
-                    {l}
-                  </button>
+            {filteredMenus.length === 0 ? (
+              <p className="text-center py-16 text-[#9c948a]">Menu tidak ditemukan</p>
+            ) : (
+              <div key={filter} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {filteredMenus.map((m, idx) => (
+                  <Reveal key={m.id} delay={idx * 0.05}>
+                    <article className="menu-card-enter group bg-gradient-to-b from-white/5 to-[#131110] border border-white/20 rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:border-white/50 transition-all duration-300 flex flex-col h-full">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-[#1a1714]">
+                        {m.image_url ? (
+                          <img
+                            src={m.image_url}
+                            alt={m.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[#9c948a]">
+                            <IconFood />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#131110] via-transparent to-transparent pointer-events-none" />
+
+                        {m.is_favorite && (
+                          <span className="absolute top-2 right-2 bg-white text-black text-[9px] font-extrabold px-2 py-1 rounded-md tracking-wider uppercase">
+                            Favorit
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="px-3 sm:px-4 pt-3 pb-3 flex flex-col flex-1 -mt-6 relative z-10">
+                        <h3 className="text-sm sm:text-base font-bold text-white leading-tight line-clamp-2 mb-0">
+                          {m.name}
+                        </h3>
+                        <div className="flex items-center justify-between pt-1 mt-0 border-t border-white/15">
+                          <p className="text-white font-bold text-sm sm:text-base">
+                            {rupiah(m.price)}
+                          </p>
+                          <button
+                            onClick={() => handleAdd(m)}
+                            className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center hover:rotate-90 hover:scale-110 active:scale-95 transition-all duration-300"
+                            aria-label={`Tambah ${m.name}`}
+                          >
+                            <IconPlus />
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  </Reveal>
                 ))}
               </div>
-            </div>
-          </Reveal>
+            )}
+          </section>
+        </main>
 
-          {filteredMenus.length === 0 ? (
-            <p className="text-center py-16 text-[#9c948a]">Menu tidak ditemukan</p>
-          ) : (
-            <div key={filter} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {filteredMenus.map((m, idx) => (
-                <Reveal key={m.id} delay={idx * 0.05}>
-                  <article className="menu-card-enter group bg-gradient-to-b from-white/5 to-[#131110] border border-white/20 rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:border-white/50 transition-all duration-300 flex flex-col h-full">
-                    <div className="relative aspect-[4/3] overflow-hidden bg-[#1a1714]">
-                      {m.image_url ? (
-                        <img
-                          src={m.image_url}
-                          alt={m.name}
-                          loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[#9c948a]">
-                          <IconFood />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#131110] via-transparent to-transparent pointer-events-none" />
-
-                      {m.is_favorite && (
-                        <span className="absolute top-2 right-2 bg-white text-black text-[9px] font-extrabold px-2 py-1 rounded-md tracking-wider uppercase">
-                          Favorit
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="px-3 sm:px-4 pt-3 pb-3 flex flex-col flex-1 -mt-6 relative z-10">
-                      <h3 className="text-sm sm:text-base font-bold text-white leading-tight line-clamp-2 mb-0">
-                        {m.name}
-                      </h3>
-                      <div className="flex items-center justify-between pt-1 mt-0 border-t border-white/15">
-                        <p className="text-white font-bold text-sm sm:text-base">
-                          {rupiah(m.price)}
-                        </p>
-                        <button
-                          onClick={() => handleAdd(m)}
-                          className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center hover:rotate-90 hover:scale-110 active:scale-95 transition-all duration-300"
-                          aria-label={`Tambah ${m.name}`}
-                        >
-                          <IconPlus />
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                </Reveal>
-              ))}
-            </div>
-          )}
-        </section>
-      </main>
-
-      <footer className="px-4 sm:px-8 py-8 border-t border-white/20 text-center text-sm text-[#9c948a]">
-        © {new Date().getFullYear()} Warkop Barokah Always
-      </footer>
+        <footer className="px-4 sm:px-8 py-8 border-t border-white/20 text-center text-sm text-[#9c948a]">
+          © {new Date().getFullYear()} Warkop Barokah Always
+        </footer>
+      </div>
 
       {toast && (
         <div className="toast-anim fixed bottom-6 left-1/2 -translate-x-1/2 bg-white text-black font-semibold text-sm px-5 py-3 rounded-full z-[400] flex items-center gap-2">
@@ -686,7 +777,7 @@ export default function HomePage() {
         />
       )}
 
-      {/* CHECKOUT MODAL — Konfirmasi Pesanan */}
+      {/* CHECKOUT MODAL */}
       {showCheckout && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <div className="menu-card-enter bg-[#131110] border border-white/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -736,13 +827,13 @@ export default function HomePage() {
 
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-white font-bold mb-2">
-                  Nama Kamu *
+                  Nama Kamu
                 </label>
                 <input
                   type="text"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Contoh: Budi"
+                  placeholder=""
                   className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all"
                 />
               </div>
@@ -779,7 +870,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* PAYMENT MODAL — Pilih Cash / QRIS */}
+      {/* PAYMENT MODAL */}
       {showPayment && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <div className="menu-card-enter bg-[#131110] border border-white/30 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -802,7 +893,6 @@ export default function HomePage() {
             </div>
 
             <div className="p-5 space-y-3">
-              {/* Pilihan Cash */}
               <button
                 onClick={() => setPaymentMethod("cash")}
                 className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all active:scale-[0.98] ${
@@ -822,9 +912,7 @@ export default function HomePage() {
                 </div>
                 <div className="text-left flex-1 min-w-0">
                   <p className="font-bold text-white text-base">Bayar Cash</p>
-                  <p className="text-xs text-[#9c948a]">
-                    Bayar langsung ke kasir
-                  </p>
+                  <p className="text-xs text-[#9c948a]"></p>
                 </div>
                 {paymentMethod === "cash" && (
                   <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center shrink-0">
@@ -833,7 +921,6 @@ export default function HomePage() {
                 )}
               </button>
 
-              {/* Pilihan QRIS */}
               <button
                 onClick={() => setPaymentMethod("qris")}
                 className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all active:scale-[0.98] ${
@@ -854,7 +941,6 @@ export default function HomePage() {
                 <div className="text-left flex-1 min-w-0">
                   <p className="font-bold text-white text-base">QRIS</p>
                   <p className="text-xs text-[#9c948a]">
-                    Scan QR code dengan e-wallet / m-banking
                   </p>
                 </div>
                 {paymentMethod === "qris" && (
@@ -864,13 +950,11 @@ export default function HomePage() {
                 )}
               </button>
 
-              {/* Info tambahan berdasarkan pilihan */}
               {paymentMethod === "cash" && (
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-sm text-blue-200">
-                  <p className="font-bold mb-1">💰 Bayar Cash</p>
+                  <p className="font-bold mb-1">Bayar Cash</p>
                   <p className="text-xs leading-relaxed">
-                    Silakan bayar ke kasir. Pesanan akan diproses setelah
-                    pembayaran diterima.
+                    silakan bayar saat pesanan datang
                   </p>
                 </div>
               )}
@@ -878,7 +962,7 @@ export default function HomePage() {
               {paymentMethod === "qris" && (
                 <div className="bg-white/5 border border-white/30 rounded-xl p-4 space-y-3">
                   <p className="font-bold text-white text-sm text-center">
-                    📱 Scan QRIS di bawah
+                    Scan QRIS di bawah
                   </p>
                   <div className="bg-white rounded-xl p-3 max-w-xs mx-auto">
                     <img
@@ -888,7 +972,7 @@ export default function HomePage() {
                     />
                   </div>
                   <p className="text-[11px] text-[#9c948a] text-center">
-                    Scan dengan aplikasi e-wallet atau m-banking
+                    tunjukan bukti pembayaran saat pesanan tiba
                   </p>
                 </div>
               )}
@@ -955,7 +1039,7 @@ export default function HomePage() {
                   <textarea
                     value={itemNote}
                     onChange={(e) => setItemNote(e.target.value)}
-                    placeholder="Contoh: Pedas, tanpa sayur, extra kerupuk..."
+                    placeholder="kosongkan kalo tidak ada"
                     rows={3}
                     className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all resize-none"
                   />
@@ -996,7 +1080,7 @@ export default function HomePage() {
                     <textarea
                       value={itemNote}
                       onChange={(e) => setItemNote(e.target.value)}
-                      placeholder="Contoh: Es sedikit"
+                      placeholder="kosongkan kalo tidak perlu"
                       rows={2}
                       className="w-full px-4 py-3 rounded-xl border border-white/30 bg-transparent text-white placeholder-[#9c948a] outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition-all resize-none"
                     />
@@ -1008,7 +1092,7 @@ export default function HomePage() {
                 <>
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-white font-bold mb-3">
-                      Pilih Suhu
+                      Pilih
                     </p>
                     <div className="flex gap-2">
                       {["Ice", "Hangat", "Panas"].map((t) => (
@@ -1029,7 +1113,7 @@ export default function HomePage() {
 
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-white font-bold mb-3">
-                      Pilih Gula
+                      Pilih
                     </p>
                     <div className="flex gap-2">
                       {["Manis", "Biasa", "Pahit"].map((s) => (
@@ -1116,9 +1200,9 @@ export default function HomePage() {
                   }`}
                 >
                   {successOrder.payment_method === "qris" ? (
-                    <>📱 Pembayaran QRIS</>
+                    <>Pembayaran QRIS</>
                   ) : (
-                    <>💰 Pembayaran Cash</>
+                    <>Pembayaran Cash</>
                   )}
                 </span>
               </div>
