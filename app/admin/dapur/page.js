@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
 
 /* ========== ICON ========== */
@@ -59,6 +59,63 @@ const IconInbox = () => (
     <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
   </svg>
 );
+const IconBell = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+);
+
+/* ========== FUNGSI MAIN SUARA ========== */
+function playSound(audioCtx) {
+  try {
+    const ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+
+    const now = ctx.currentTime;
+
+    const o1 = ctx.createOscillator();
+    const g1 = ctx.createGain();
+    o1.connect(g1);
+    g1.connect(ctx.destination);
+    o1.type = "sine";
+    o1.frequency.setValueAtTime(880, now);
+    g1.gain.setValueAtTime(0, now);
+    g1.gain.linearRampToValueAtTime(0.4, now + 0.02);
+    g1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    o1.start(now);
+    o1.stop(now + 0.3);
+
+    const o2 = ctx.createOscillator();
+    const g2 = ctx.createGain();
+    o2.connect(g2);
+    g2.connect(ctx.destination);
+    o2.type = "sine";
+    o2.frequency.setValueAtTime(660, now + 0.2);
+    g2.gain.setValueAtTime(0, now + 0.2);
+    g2.gain.linearRampToValueAtTime(0.4, now + 0.22);
+    g2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+    o2.start(now + 0.2);
+    o2.stop(now + 0.6);
+
+    const o3 = ctx.createOscillator();
+    const g3 = ctx.createGain();
+    o3.connect(g3);
+    g3.connect(ctx.destination);
+    o3.type = "sine";
+    o3.frequency.setValueAtTime(1100, now + 0.45);
+    g3.gain.setValueAtTime(0, now + 0.45);
+    g3.gain.linearRampToValueAtTime(0.35, now + 0.47);
+    g3.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+    o3.start(now + 0.45);
+    o3.stop(now + 0.9);
+
+    return ctx;
+  } catch (e) {
+    console.error("Sound error:", e);
+    return null;
+  }
+}
 
 export default function DapurPage() {
   const [orders, setOrders] = useState([]);
@@ -66,26 +123,67 @@ export default function DapurPage() {
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
   const [detail, setDetail] = useState(null);
+  const [popup, setPopup] = useState(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  const audioCtxRef = useRef(null);
+
+  // Load setting suara
+  useEffect(() => {
+    const saved = localStorage.getItem("sound_enabled");
+    if (saved !== null) setSoundEnabled(saved === "true");
+  }, []);
+
+  // Unlock audio
+  useEffect(() => {
+    function unlock() {
+      if (audioCtxRef.current) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        ctx.resume().then(() => {
+          audioCtxRef.current = ctx;
+        });
+      } catch (e) {}
+    }
+    unlock();
+    window.addEventListener("click", unlock, { once: true });
+    window.addEventListener("touchstart", unlock, { once: true });
+    return () => {
+      window.removeEventListener("click", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
 
   useEffect(() => {
     loadOrders();
     const tick = setInterval(() => setNow(Date.now()), 10000);
+
     const channel = supabase
       .channel("dapur-realtime")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "orders" },
-        () => loadOrders()
+        (payload) => {
+          // Kalau ada pesanan baru
+          if (payload.eventType === "INSERT") {
+            if (soundEnabled) {
+              audioCtxRef.current = playSound(audioCtxRef.current);
+            }
+            setPopup(payload.new);
+            setTimeout(() => setPopup(null), 5000);
+          }
+          loadOrders();
+        }
       )
       .subscribe();
+
     return () => {
       clearInterval(tick);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [soundEnabled]);
 
   async function loadOrders() {
-    // HANYA tampilkan pesanan "pending" (belum direspon)
     const { data: ordersData } = await supabase
       .from("orders")
       .select("*")
@@ -112,13 +210,11 @@ export default function DapurPage() {
     setLoading(false);
   }
 
-  // TERIMA pesanan → status "diterima"
   async function acceptOrder(id) {
     await supabase.from("orders").update({ status: "diterima" }).eq("id", id);
     loadOrders();
   }
 
-  // TOLAK pesanan → status "ditolak"
   async function rejectOrder(id) {
     if (!confirm("Tolak pesanan ini?")) return;
     await supabase.from("orders").update({ status: "ditolak" }).eq("id", id);
@@ -144,6 +240,30 @@ export default function DapurPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {/* POPUP NOTIFIKASI */}
+      {popup && (
+        <div className="fixed top-4 right-4 z-[100] bg-green-500 text-white rounded-2xl shadow-2xl p-5 max-w-sm animate-pulse">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <IconBell />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-base">🔔 Pesanan Baru!</p>
+              <p className="text-sm text-white/90 truncate">
+                Meja {popup.table_number} · {popup.customer_name}
+              </p>
+              <p className="text-lg font-bold mt-1">{rp(popup.total)}</p>
+            </div>
+            <button
+              onClick={() => setPopup(null)}
+              className="text-white/80 hover:text-white shrink-0"
+            >
+              <IconClose />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
@@ -197,7 +317,6 @@ export default function DapurPage() {
                   urgent ? "border-red-400 bg-red-50" : "border-slate-200 bg-white"
                 }`}
               >
-                {/* Header Card */}
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-14 h-14 rounded-2xl bg-white border-2 border-slate-900 text-slate-900 flex items-center justify-center font-bold text-2xl shrink-0">
@@ -226,7 +345,6 @@ export default function DapurPage() {
                   </div>
                 </div>
 
-                {/* METODE PEMBAYARAN — hanya metode, tanpa status */}
                 <div
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl mb-3 text-xs font-bold ${
                     isQris
@@ -238,7 +356,6 @@ export default function DapurPage() {
                   <span>{isQris ? "QRIS" : "CASH"}</span>
                 </div>
 
-                {/* Items Preview */}
                 <div className="bg-white rounded-xl p-3 mb-3 space-y-1.5 max-h-32 overflow-y-auto border border-slate-200">
                   {items.slice(0, 4).map((it) => (
                     <div key={it.id} className="flex items-center gap-2 text-sm">
@@ -257,7 +374,6 @@ export default function DapurPage() {
                   )}
                 </div>
 
-                {/* Catatan */}
                 {o.notes && (
                   <div className="flex items-start gap-2 bg-amber-100 border border-amber-200 text-amber-800 rounded-lg p-2 mb-3 text-xs">
                     <IconNote />
@@ -265,17 +381,13 @@ export default function DapurPage() {
                   </div>
                 )}
 
-                {/* Total */}
                 <div className="flex items-center justify-between mb-3 pt-2 border-t border-slate-200">
-                  <span className="text-xs text-slate-500 font-semibold">
-                    Total
-                  </span>
+                  <span className="text-xs text-slate-500 font-semibold">Total</span>
                   <span className="font-bold text-slate-900 text-lg">
                     {rp(o.total)}
                   </span>
                 </div>
 
-                {/* Actions */}
                 <div className="flex flex-col gap-2 mt-auto">
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -348,7 +460,6 @@ export default function DapurPage() {
                 </div>
               </div>
 
-              {/* METODE PEMBAYARAN — hanya metode */}
               <div
                 className={`rounded-xl p-4 ${
                   detail.payment_method === "qris"
@@ -373,7 +484,7 @@ export default function DapurPage() {
                     <p className="font-bold text-slate-800">
                       {detail.payment_method === "qris"
                         ? "QRIS"
-                        : "Cash"}
+                        : "Cash (Bayar di Kasir)"}
                     </p>
                   </div>
                 </div>
