@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
 
-/* ========== ICON ========== */
 const IconClock = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
     <circle cx="12" cy="12" r="10" />
@@ -22,7 +21,7 @@ const IconX = () => (
   </svg>
 );
 const IconNote = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
     <polyline points="14 2 14 8 20 8" />
     <line x1="16" y1="13" x2="8" y2="13" />
@@ -30,14 +29,14 @@ const IconNote = () => (
   </svg>
 );
 const IconCash = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
     <rect x="2" y="6" width="20" height="12" rx="2" />
     <circle cx="12" cy="12" r="2" />
     <path d="M6 12h.01M18 12h.01" />
   </svg>
 );
 const IconQRIS = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
     <rect x="3" y="3" width="7" height="7" rx="1" />
     <rect x="14" y="3" width="7" height="7" rx="1" />
     <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -54,13 +53,13 @@ const IconClose = () => (
   </svg>
 );
 const IconInbox = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
     <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
     <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
   </svg>
 );
 const IconBell = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
@@ -73,13 +72,11 @@ const IconRefresh = () => (
   </svg>
 );
 
-/* ========== FUNGSI SUARA ========== */
 function playSound(audioCtx) {
   try {
     const ctx =
       audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === "suspended") ctx.resume();
-
     const now = ctx.currentTime;
 
     const o1 = ctx.createOscillator();
@@ -117,15 +114,12 @@ function playSound(audioCtx) {
     g3.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
     o3.start(now + 0.45);
     o3.stop(now + 0.9);
-
     return ctx;
   } catch (e) {
-    console.error("Sound error:", e);
     return null;
   }
 }
 
-/* ========== HELPER ========== */
 function uniqueId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -145,22 +139,16 @@ export default function DapurPage() {
   const seenIdsRef = useRef(new Set());
   const isFirstLoadRef = useRef(true);
 
-  // Load setting suara
   useEffect(() => {
     const saved = localStorage.getItem("sound_enabled");
     if (saved !== null) setSoundEnabled(saved === "true");
-
-    // Listen perubahan setting suara dari tab lain
     function onStorage(e) {
-      if (e.key === "sound_enabled") {
-        setSoundEnabled(e.newValue === "true");
-      }
+      if (e.key === "sound_enabled") setSoundEnabled(e.newValue === "true");
     }
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // Unlock audio
   useEffect(() => {
     function unlock() {
       if (audioCtxRef.current) return;
@@ -180,51 +168,31 @@ export default function DapurPage() {
     };
   }, []);
 
-  // ========== MAIN REALTIME + POLLING ==========
   useEffect(() => {
-    console.log("🚀 Dapur page mount");
     isFirstLoadRef.current = true;
     seenIdsRef.current = new Set();
-
     loadOrders(true);
 
-    // Timer untuk update elapsed time
     const tick = setInterval(() => setNow(Date.now()), 10000);
+    const pollInterval = setInterval(() => loadOrders(false), 3000);
 
-    // POLLING — setiap 3 detik (fallback utama)
-    const pollInterval = setInterval(() => {
-      console.log("🔄 Polling...");
-      loadOrders(false);
-    }, 3000);
-
-    // Bersihkan channel lama
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
 
     const channelName = uniqueId("dapur");
-    console.log("📡 Channel:", channelName);
-
     const channel = supabase
       .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "orders" },
         (payload) => {
-          console.log("📡 Realtime event:", payload.eventType, payload.new?.id);
-
           if (payload.eventType === "INSERT") {
             const order = payload.new;
-
-            // Skip kalau sudah pernah lihat
-            if (seenIdsRef.current.has(order.id)) {
-              console.log("⚠️ Skip duplikat:", order.id);
-              return;
-            }
+            if (seenIdsRef.current.has(order.id)) return;
             seenIdsRef.current.add(order.id);
 
-            // Jangan bunyi saat pertama kali load
             if (!isFirstLoadRef.current) {
               if (soundEnabled) {
                 audioCtxRef.current = playSound(audioCtxRef.current);
@@ -233,18 +201,14 @@ export default function DapurPage() {
               setTimeout(() => setPopup(null), 5000);
             }
           }
-
           loadOrders(false);
         }
       )
-      .subscribe((status) => {
-        console.log("📡 Realtime status:", status);
-      });
+      .subscribe();
 
     channelRef.current = channel;
 
     return () => {
-      console.log("🧹 Cleanup dapur page");
       clearInterval(tick);
       clearInterval(pollInterval);
       if (channelRef.current) {
@@ -256,16 +220,11 @@ export default function DapurPage() {
 
   async function loadOrders(isFirst) {
     try {
-      const { data: ordersData, error } = await supabase
+      const { data: ordersData } = await supabase
         .from("orders")
         .select("*")
         .eq("status", "pending")
         .order("created_at", { ascending: true });
-
-      if (error) {
-        console.error("Load orders error:", error);
-        return;
-      }
 
       if (ordersData && ordersData.length > 0) {
         const ids = ordersData.map((o) => o.id);
@@ -288,16 +247,12 @@ export default function DapurPage() {
       setLastSync(new Date());
 
       if (isFirst) {
-        console.log("✅ Load pertama:", ordersData?.length, "pesanan");
-        // Update seenIds
         (ordersData || []).forEach((o) => seenIdsRef.current.add(o.id));
-        // Setelah 2 detik, matikan flag first load
         setTimeout(() => {
           isFirstLoadRef.current = false;
         }, 2000);
       }
     } catch (e) {
-      console.error("Load exception:", e);
     } finally {
       setLoading(false);
     }
@@ -315,7 +270,6 @@ export default function DapurPage() {
   }
 
   function manualRefresh() {
-    console.log("🔄 Manual refresh");
     loadOrders(false);
   }
 
@@ -344,14 +298,20 @@ export default function DapurPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* POPUP NOTIFIKASI */}
       {popup && (
-        <div className="fixed top-4 right-4 z-[100] bg-green-500 text-white rounded-2xl shadow-2xl p-5 max-w-sm animate-pulse">
+        <div
+          className="fixed top-4 right-4 z-[100] rounded-2xl p-5 max-w-sm"
+          style={{
+            background: "linear-gradient(135deg, #ef4444, #b91c1c)",
+            boxShadow: "0 24px 64px rgba(239, 68, 68, 0.5), 0 0 60px rgba(239, 68, 68, 0.3)",
+            animation: "pulse 2s ease-in-out infinite",
+          }}
+        >
           <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0 text-white">
               <IconBell />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 text-white">
               <p className="font-bold text-base">🔔 Pesanan Baru!</p>
               <p className="text-sm text-white/90 truncate">
                 Meja {popup.table_number} · {popup.customer_name}
@@ -368,33 +328,38 @@ export default function DapurPage() {
         </div>
       )}
 
-      {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
+          <h1 className="text-2xl sm:text-3xl font-bold text-red-50 text-red-glow">
             Layar Dapur
           </h1>
-          <p className="text-slate-500 mt-1 text-sm">
-            Terima atau tolak pesanan yang masuk · Sync: {timeStr}
+          <p className="text-red-300/60 mt-1 text-sm">
+            Terima atau tolak pesanan · Sync: {timeStr}
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={manualRefresh}
-            className="bg-white rounded-xl px-4 py-3 border border-slate-200 flex items-center gap-2 hover:border-slate-400 transition-colors"
+            className="glass-card rounded-xl px-4 py-3 flex items-center gap-2 hover:border-red-500/50 transition-colors text-red-100"
           >
             <IconRefresh />
-            <span className="text-sm font-semibold text-slate-700">Refresh</span>
+            <span className="text-sm font-semibold">Refresh</span>
           </button>
-          <div className="bg-white rounded-xl px-5 py-3 border border-slate-200 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+          <div className="glass-card rounded-xl px-5 py-3 flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-lg flex items-center justify-center"
+              style={{
+                background: "linear-gradient(135deg, #f59e0b, #ea580c)",
+                boxShadow: "0 8px 20px rgba(245, 158, 11, 0.3)",
+              }}
+            >
               <IconInbox />
             </div>
             <div>
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+              <p className="text-[10px] text-red-300/60 uppercase tracking-wider font-semibold">
                 Pesanan Baru
               </p>
-              <p className="text-2xl font-bold text-slate-800 leading-none">
+              <p className="text-2xl font-bold text-red-50 leading-none">
                 {orders.length}
               </p>
             </div>
@@ -405,18 +370,22 @@ export default function DapurPage() {
       {loading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-80 bg-white rounded-2xl animate-pulse" />
+            <div key={i} className="glass-card rounded-2xl h-80 animate-pulse" />
           ))}
         </div>
       ) : orders.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3 text-green-600">
+        <div className="glass-card rounded-2xl text-center py-20 border-dashed">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+            style={{
+              background: "linear-gradient(135deg, #22c55e, #10b981)",
+              boxShadow: "0 8px 24px rgba(34, 197, 94, 0.4)",
+            }}
+          >
             <IconCheck />
           </div>
-          <p className="text-lg font-bold text-slate-700">
-            Tidak ada pesanan baru
-          </p>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-lg font-bold text-red-50">Tidak ada pesanan baru</p>
+          <p className="text-red-300/60 text-sm mt-1">
             Pesanan masuk akan muncul otomatis · Auto sync tiap 3 detik
           </p>
         </div>
@@ -430,33 +399,55 @@ export default function DapurPage() {
             return (
               <div
                 key={o.id}
-                className={`rounded-2xl p-4 border-2 transition-all flex flex-col ${
-                  urgent
-                    ? "border-red-400 bg-red-50"
-                    : "border-slate-200 bg-white"
+                className={`rounded-2xl p-4 transition-all flex flex-col ${
+                  urgent ? "border-red-400" : ""
                 }`}
+                style={{
+                  background: urgent
+                    ? "rgba(239, 68, 68, 0.15)"
+                    : "rgba(20, 6, 8, 0.65)",
+                  backdropFilter: "blur(20px) saturate(150%)",
+                  WebkitBackdropFilter: "blur(20px) saturate(150%)",
+                  border: urgent
+                    ? "2px solid rgba(239, 68, 68, 0.6)"
+                    : "1px solid rgba(239, 68, 68, 0.22)",
+                  boxShadow: urgent
+                    ? "0 0 40px rgba(239, 68, 68, 0.3)"
+                    : "0 24px 64px rgba(0, 0, 0, 0.4)",
+                }}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-14 h-14 rounded-2xl bg-white border-2 border-slate-900 text-slate-900 flex items-center justify-center font-bold text-2xl shrink-0">
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-2xl shrink-0 text-white"
+                      style={{
+                        background: "linear-gradient(135deg, #ef4444, #b91c1c)",
+                        boxShadow: "0 8px 24px rgba(239, 68, 68, 0.4)",
+                      }}
+                    >
                       {o.table_number || "?"}
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
+                      <p className="text-[10px] text-red-300/60 uppercase tracking-wider font-bold">
                         Meja
                       </p>
-                      <p className="font-bold text-slate-800 text-base truncate max-w-[100px]">
+                      <p className="font-bold text-red-50 text-base truncate max-w-[100px]">
                         {o.customer_name}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="inline-block text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider text-white bg-amber-500">
+                    <span
+                      className="inline-block text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider text-white"
+                      style={{
+                        background: "linear-gradient(135deg, #f59e0b, #ea580c)",
+                      }}
+                    >
                       Baru
                     </span>
                     <p
                       className={`text-xs mt-1.5 font-semibold flex items-center justify-end gap-1 ${
-                        urgent ? "text-red-600" : "text-slate-500"
+                        urgent ? "text-red-300" : "text-red-300/60"
                       }`}
                     >
                       <IconClock /> {elapsed(o.created_at)}
@@ -465,49 +456,66 @@ export default function DapurPage() {
                 </div>
 
                 <div
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl mb-3 text-xs font-bold ${
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 text-xs font-bold"
+                  style={
                     isQris
-                      ? "bg-purple-100 text-purple-800 border border-purple-200"
-                      : "bg-green-100 text-green-800 border border-green-200"
-                  }`}
+                      ? {
+                          background: "rgba(168, 85, 247, 0.15)",
+                          border: "1px solid rgba(168, 85, 247, 0.3)",
+                          color: "#c4b5fd",
+                        }
+                      : {
+                          background: "rgba(34, 197, 94, 0.15)",
+                          border: "1px solid rgba(34, 197, 94, 0.3)",
+                          color: "#86efac",
+                        }
+                  }
                 >
                   {isQris ? <IconQRIS /> : <IconCash />}
                   <span>{isQris ? "QRIS" : "CASH"}</span>
                 </div>
 
-                <div className="bg-white rounded-xl p-3 mb-3 space-y-1.5 max-h-32 overflow-y-auto border border-slate-200">
+                <div
+                  className="rounded-xl p-3 mb-3 space-y-1.5 max-h-32 overflow-y-auto"
+                  style={{ background: "rgba(255, 255, 255, 0.03)" }}
+                >
                   {items.slice(0, 4).map((it) => (
-                    <div
-                      key={it.id}
-                      className="flex items-center gap-2 text-sm"
-                    >
-                      <span className="w-6 h-6 rounded-lg bg-slate-900 text-white font-bold flex items-center justify-center text-xs shrink-0">
+                    <div key={it.id} className="flex items-center gap-2 text-sm">
+                      <span
+                        className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 text-white"
+                        style={{ background: "#ef4444" }}
+                      >
                         {it.quantity}
                       </span>
-                      <span className="font-medium text-slate-800 truncate">
+                      <span className="font-medium text-red-100 truncate">
                         {it.menu_name}
                       </span>
                     </div>
                   ))}
                   {items.length > 4 && (
-                    <p className="text-[11px] text-slate-500 italic">
+                    <p className="text-[11px] text-red-300/50 italic">
                       +{items.length - 4} item lainnya
                     </p>
                   )}
                 </div>
 
                 {o.notes && (
-                  <div className="flex items-start gap-2 bg-amber-100 border border-amber-200 text-amber-800 rounded-lg p-2 mb-3 text-xs">
+                  <div
+                    className="flex items-start gap-2 rounded-lg p-2 mb-3 text-xs"
+                    style={{
+                      background: "rgba(245, 158, 11, 0.1)",
+                      border: "1px solid rgba(245, 158, 11, 0.3)",
+                      color: "#fcd34d",
+                    }}
+                  >
                     <IconNote />
                     <span className="flex-1 line-clamp-2">{o.notes}</span>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between mb-3 pt-2 border-t border-slate-200">
-                  <span className="text-xs text-slate-500 font-semibold">
-                    Total
-                  </span>
-                  <span className="font-bold text-slate-900 text-lg">
+                <div className="flex items-center justify-between mb-3 pt-2 border-t border-red-500/15">
+                  <span className="text-xs text-red-300/60 font-semibold">Total</span>
+                  <span className="font-bold text-red-50 text-lg">
                     {rp(o.total)}
                   </span>
                 </div>
@@ -516,13 +524,22 @@ export default function DapurPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => rejectOrder(o.id)}
-                      className="py-3 rounded-xl bg-white border-2 border-red-500 text-red-600 font-bold text-sm hover:bg-red-50 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                      className="py-3 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                      style={{
+                        background: "rgba(20, 6, 8, 0.5)",
+                        border: "2px solid rgba(239, 68, 68, 0.5)",
+                        color: "#fca5a5",
+                      }}
                     >
                       <IconX /> Tolak
                     </button>
                     <button
                       onClick={() => acceptOrder(o.id)}
-                      className="py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                      className="py-3 rounded-xl font-bold text-sm text-white transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                      style={{
+                        background: "linear-gradient(135deg, #ef4444, #b91c1c)",
+                        boxShadow: "0 8px 24px rgba(239, 68, 68, 0.4)",
+                      }}
                     >
                       <IconCheck /> Terima
                     </button>
@@ -530,7 +547,11 @@ export default function DapurPage() {
 
                   <button
                     onClick={() => setDetail(o)}
-                    className="w-full py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold text-xs hover:bg-slate-200 transition-colors"
+                    className="w-full py-2 rounded-xl font-semibold text-xs transition-colors"
+                    style={{
+                      background: "rgba(255, 255, 255, 0.05)",
+                      color: "#fca5a5",
+                    }}
                   >
                     Lihat Detail Lengkap
                   </button>
@@ -541,26 +562,33 @@ export default function DapurPage() {
         </div>
       )}
 
-      {/* DETAIL MODAL */}
       {detail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setDetail(null)}
           />
-          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <div
+            className="relative rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col"
+            style={{
+              background: "rgba(20, 6, 8, 0.95)",
+              backdropFilter: "blur(24px) saturate(150%)",
+              WebkitBackdropFilter: "blur(24px) saturate(150%)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              boxShadow: "0 24px 64px rgba(0, 0, 0, 0.8), 0 0 60px rgba(239, 68, 68, 0.2)",
+            }}
+          >
+            <div className="p-5 border-b border-red-500/20 flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-lg text-slate-800">
-                  Detail Pesanan
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h3 className="font-bold text-lg text-red-50">Detail Pesanan</h3>
+                <p className="text-xs text-red-300/60 mt-0.5">
                   Meja {detail.table_number} · {detail.customer_name}
                 </p>
               </div>
               <button
                 onClick={() => setDetail(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-red-300/60 hover:text-red-100"
+                style={{ background: "rgba(255, 255, 255, 0.05)" }}
               >
                 <IconClose />
               </button>
@@ -568,50 +596,61 @@ export default function DapurPage() {
 
             <div className="p-5 overflow-y-auto flex-1 space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
+                <div
+                  className="rounded-xl p-3"
+                  style={{ background: "rgba(255, 255, 255, 0.03)" }}
+                >
+                  <p className="text-[10px] text-red-300/60 uppercase tracking-wider font-bold">
                     Meja
                   </p>
-                  <p className="font-bold text-slate-800 text-lg mt-0.5">
+                  <p className="font-bold text-red-50 text-lg mt-0.5">
                     {detail.table_number || "-"}
                   </p>
                 </div>
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
+                <div
+                  className="rounded-xl p-3"
+                  style={{ background: "rgba(255, 255, 255, 0.03)" }}
+                >
+                  <p className="text-[10px] text-red-300/60 uppercase tracking-wider font-bold">
                     Pelanggan
                   </p>
-                  <p className="font-bold text-slate-800 mt-0.5 truncate">
+                  <p className="font-bold text-red-50 mt-0.5 truncate">
                     {detail.customer_name}
                   </p>
                 </div>
               </div>
 
               <div
-                className={`rounded-xl p-4 ${
+                className="rounded-xl p-4"
+                style={
                   detail.payment_method === "qris"
-                    ? "bg-purple-50 border border-purple-200"
-                    : "bg-green-50 border border-green-200"
-                }`}
+                    ? {
+                        background: "rgba(168, 85, 247, 0.15)",
+                        border: "1px solid rgba(168, 85, 247, 0.3)",
+                      }
+                    : {
+                        background: "rgba(34, 197, 94, 0.15)",
+                        border: "1px solid rgba(34, 197, 94, 0.3)",
+                      }
+                }
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      detail.payment_method === "qris"
-                        ? "bg-purple-500 text-white"
-                        : "bg-green-500 text-white"
-                    }`}
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-white"
+                    style={{
+                      background:
+                        detail.payment_method === "qris"
+                          ? "linear-gradient(135deg, #a855f7, #7c3aed)"
+                          : "linear-gradient(135deg, #22c55e, #10b981)",
+                    }}
                   >
-                    {detail.payment_method === "qris" ? (
-                      <IconQRIS />
-                    ) : (
-                      <IconCash />
-                    )}
+                    {detail.payment_method === "qris" ? <IconQRIS /> : <IconCash />}
                   </div>
                   <div className="flex-1">
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
+                    <p className="text-[10px] text-red-300/60 uppercase tracking-wider font-bold">
                       Metode Pembayaran
                     </p>
-                    <p className="font-bold text-slate-800">
+                    <p className="font-bold text-red-50">
                       {detail.payment_method === "qris"
                         ? "QRIS"
                         : "Cash (Bayar di Kasir)"}
@@ -621,35 +660,40 @@ export default function DapurPage() {
               </div>
 
               {detail.notes && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                  <p className="text-[10px] text-amber-700 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                <div
+                  className="rounded-xl p-3"
+                  style={{
+                    background: "rgba(245, 158, 11, 0.1)",
+                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                  }}
+                >
+                  <p className="text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1 font-bold" style={{ color: "#fcd34d" }}>
                     <IconNote /> Catatan
                   </p>
-                  <p className="text-sm text-slate-700">{detail.notes}</p>
+                  <p className="text-sm text-red-100">{detail.notes}</p>
                 </div>
               )}
 
               <div>
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-2">
+                <p className="text-[10px] text-red-300/60 uppercase tracking-wider font-bold mb-2">
                   Item Pesanan
                 </p>
                 <div className="space-y-2">
                   {(itemsMap[detail.id] || []).map((it) => (
                     <div
                       key={it.id}
-                      className="flex items-start justify-between gap-3 text-sm bg-slate-50 rounded-xl p-3"
+                      className="flex items-start justify-between gap-3 text-sm rounded-xl p-3"
+                      style={{ background: "rgba(255, 255, 255, 0.03)" }}
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-slate-800">
-                          {it.menu_name}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="font-semibold text-red-50">{it.menu_name}</p>
+                        <p className="text-xs text-red-300/60 mt-0.5">
                           {it.quantity} × {rp(it.price)}
                           {it.variant_temp && ` · ${it.variant_temp}`}
                           {it.variant_sugar && ` · Gula ${it.variant_sugar}`}
                         </p>
                       </div>
-                      <p className="font-bold text-slate-800 shrink-0">
+                      <p className="font-bold text-red-50 shrink-0">
                         {rp(it.price * it.quantity)}
                       </p>
                     </div>
@@ -658,9 +702,9 @@ export default function DapurPage() {
               </div>
             </div>
 
-            <div className="p-5 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-slate-600 font-semibold">Total</span>
-              <span className="text-2xl font-bold text-slate-900">
+            <div className="p-5 border-t border-red-500/20 flex items-center justify-between">
+              <span className="text-red-300/60 font-semibold">Total</span>
+              <span className="text-2xl font-bold text-red-50">
                 {rp(detail.total)}
               </span>
             </div>
