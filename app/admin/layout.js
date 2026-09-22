@@ -86,15 +86,15 @@ const MENU = [
   { href: "/admin/riwayat", label: "Riwayat", Icon: IconHistory },
 ];
 
-/* ========== FUNGSI MAIN SUARA ========== */
+/* ========== FUNGSI SUARA ========== */
 function playNotificationSound(audioCtx) {
   try {
-    const ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const ctx =
+      audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === "suspended") ctx.resume();
 
     const now = ctx.currentTime;
 
-    // Nada 1: "ting" (880 Hz)
     const o1 = ctx.createOscillator();
     const g1 = ctx.createGain();
     o1.connect(g1);
@@ -107,7 +107,6 @@ function playNotificationSound(audioCtx) {
     o1.start(now);
     o1.stop(now + 0.3);
 
-    // Nada 2: "tong" (660 Hz) — delay 0.2s
     const o2 = ctx.createOscillator();
     const g2 = ctx.createGain();
     o2.connect(g2);
@@ -120,7 +119,6 @@ function playNotificationSound(audioCtx) {
     o2.start(now + 0.2);
     o2.stop(now + 0.6);
 
-    // Nada 3: "ting" tinggi lagi (1100 Hz) — delay 0.45s
     const o3 = ctx.createOscillator();
     const g3 = ctx.createGain();
     o3.connect(g3);
@@ -140,6 +138,11 @@ function playNotificationSound(audioCtx) {
   }
 }
 
+/* ========== HELPER: ID UNIK ========== */
+function uniqueId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -147,10 +150,10 @@ export default function AdminLayout({ children }) {
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [soundReady, setSoundReady] = useState(false);
 
   const audioCtxRef = useRef(null);
-  const newOrderCountRef = useRef(0);
+  const channelRef = useRef(null);
+  const lastOrderIdRef = useRef(null);
 
   // ========== LOAD SETTING SUARA ==========
   useEffect(() => {
@@ -158,34 +161,26 @@ export default function AdminLayout({ children }) {
     if (saved !== null) setSoundEnabled(saved === "true");
   }, []);
 
-  // ========== AKTIFKAN AUDIO SETELAH USER INTERAKSI ==========
+  // ========== UNLOCK AUDIO ==========
   useEffect(() => {
-    function unlockAudio() {
+    function unlock() {
       if (audioCtxRef.current) return;
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         ctx.resume().then(() => {
           audioCtxRef.current = ctx;
-          setSoundReady(true);
           console.log("🔊 Audio siap");
         });
       } catch (e) {
-        console.error("Unlock audio error:", e);
+        console.error("Unlock error:", e);
       }
     }
-
-    // Coba langsung
-    unlockAudio();
-
-    // Kalau browser blokir, tunggu interaksi pertama
-    window.addEventListener("click", unlockAudio, { once: true });
-    window.addEventListener("touchstart", unlockAudio, { once: true });
-    window.addEventListener("keydown", unlockAudio, { once: true });
-
+    unlock();
+    window.addEventListener("click", unlock, { once: true });
+    window.addEventListener("touchstart", unlock, { once: true });
     return () => {
-      window.removeEventListener("click", unlockAudio);
-      window.removeEventListener("touchstart", unlockAudio);
-      window.removeEventListener("keydown", unlockAudio);
+      window.removeEventListener("click", unlock);
+      window.removeEventListener("touchstart", unlock);
     };
   }, []);
 
@@ -214,77 +209,85 @@ export default function AdminLayout({ children }) {
     setSidebarOpen(false);
   }, [pathname]);
 
-  // ========== REALTIME LISTENER — PESANAN BARU ==========
+  // ========== REALTIME LISTENER ==========
   useEffect(() => {
     if (pathname === "/admin/login") return;
     if (!ready) return;
 
+    // Bersihkan channel lama
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const channelName = uniqueId("admin-global");
+    console.log("📡 Membuat channel:", channelName);
+
     const channel = supabase
-      .channel("admin-global-orders")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "orders" },
         (payload) => {
           const order = payload.new;
-          console.log("🔔 Pesanan baru:", order);
 
-          // Mainkan suara kalau enabled
+          // Cegah duplikat
+          if (lastOrderIdRef.current === order.id) {
+            console.log("⚠️ Duplikat, skip:", order.id);
+            return;
+          }
+          lastOrderIdRef.current = order.id;
+
+          console.log("🔔 Pesanan baru:", order.id);
+
+          // Suara
           if (soundEnabled) {
             audioCtxRef.current = playNotificationSound(audioCtxRef.current);
           }
 
-          // Notif browser (kalau diizinkan)
-          if ("Notification" in window && Notification.permission === "granted") {
+          // Notif browser
+          if (
+            "Notification" in window &&
+            Notification.permission === "granted"
+          ) {
             try {
               new Notification(`🔔 Pesanan Baru - Meja ${order.table_number}`, {
                 body: `${order.customer_name} · Rp ${(order.total || 0).toLocaleString("id-ID")}`,
                 icon: "https://cdn.zass.in/3JXTmgsKRM.png",
                 tag: "order-" + order.id,
-                requireInteraction: true,
               });
             } catch (e) {
               console.error("Notif error:", e);
             }
           }
-
-          // Counter
-          newOrderCountRef.current += 1;
-
-          // Kalau di halaman /admin (Overview), reload
-          if (pathname === "/admin") {
-            router.refresh();
-          }
         }
       )
       .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          console.log("📡 Realtime admin siap");
-        }
+        console.log("📡 Global status:", status);
       });
 
+    channelRef.current = channel;
+
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [ready, pathname, soundEnabled, router]);
+  }, [ready, soundEnabled]);
 
   // ========== TOGGLE SUARA ==========
   function toggleSound() {
     const newVal = !soundEnabled;
     setSoundEnabled(newVal);
     localStorage.setItem("sound_enabled", newVal ? "true" : "false");
-
-    // Kalau baru nyalakan, mainkan suara test
     if (newVal) {
       audioCtxRef.current = playNotificationSound(audioCtxRef.current);
     }
   }
 
-  // ========== MINTA IZIN NOTIFIKASI ==========
   async function requestNotifPermission() {
-    if (!("Notification" in window)) {
-      alert("Browser tidak support notifikasi");
-      return;
-    }
+    if (!("Notification" in window)) return alert("Browser tidak support");
     const perm = await Notification.requestPermission();
     if (perm === "granted") {
       new Notification("✅ Notifikasi aktif", {
@@ -311,6 +314,10 @@ export default function AdminLayout({ children }) {
 
   async function handleLogout() {
     if (!confirm("Logout dari dashboard?")) return;
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
     await supabase.auth.signOut();
     window.location.href = "/admin/login";
   }
@@ -372,7 +379,6 @@ export default function AdminLayout({ children }) {
         </nav>
 
         <div className="p-3 border-t border-slate-800 space-y-2">
-          {/* Tombol Suara */}
           <button
             onClick={toggleSound}
             className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
@@ -385,12 +391,8 @@ export default function AdminLayout({ children }) {
               {soundEnabled ? <IconBell /> : <IconBellOff />}
               <span>{soundEnabled ? "Suara: ON" : "Suara: OFF"}</span>
             </div>
-            <span className={`text-xs font-bold ${soundEnabled ? "text-green-400" : "text-slate-500"}`}>
-              {soundEnabled ? "🔊" : "🔇"}
-            </span>
           </button>
 
-          {/* Tombol Izin Notifikasi */}
           {"Notification" in window && Notification.permission !== "granted" && (
             <button
               onClick={requestNotifPermission}
@@ -436,7 +438,6 @@ export default function AdminLayout({ children }) {
               Barokah Admin
             </span>
           </div>
-          {/* Tombol Suara di mobile */}
           <button
             onClick={toggleSound}
             className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
@@ -444,7 +445,6 @@ export default function AdminLayout({ children }) {
                 ? "bg-green-100 text-green-700"
                 : "bg-slate-100 text-slate-400"
             }`}
-            aria-label="Toggle suara"
           >
             {soundEnabled ? <IconBell /> : <IconBellOff />}
           </button>
